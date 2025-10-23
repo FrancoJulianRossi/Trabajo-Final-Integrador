@@ -1,15 +1,18 @@
-import { User } from "./user.entity";
-import { Screening } from "./screening.entity";
-import { Seat } from "./seat.entity";
+// import { User } from "./user.entity";
+import { Screening } from "../screening";
+import { seats } from "../seat.model";
+
+export type ReservationStatus = "Pending" | "Paid" | "Canceled";
+
 export class Reservation{
     constructor (
         protected idReservation: number,
         protected reservationDate: Date,
-        protected status: "Pendiente" | "Confirmada" | "Cancelada",
+        protected status: ReservationStatus,
         protected total: number,
-        protected user: User,
+        // protected user: User,
         protected screening: Screening,
-        protected seat: Seat
+        protected seat : seats[] = []
     ){}
 
     getIdReservation(): number{
@@ -18,29 +21,42 @@ export class Reservation{
     getReservationDate(): Date{
         return this.reservationDate;
     }
-    getStatus(): "Pendiente" | "Confirmada" | "Cancelada"{
+    getStatus(): ReservationStatus{
         return this.status;
     }
     getTotal(): number{
         return this.total;
     }
-    getUser(): User{
-        return this.user;
-    }
+    // getUser(): User{
+    //     return this.user;
+    // }
     getScreening(): Screening{
         return this.screening;
     }
-    getSeat(): Seat{
-        return this.seat;
+    getSeat(): seats[]{
+        return [...this.seat];
     }
 
     setReservationDate(reservationDate: Date): void{
         this.reservationDate = reservationDate;
     }
-    setStatus(status: "Pendiente" | "Confirmada" | "Cancelada"): void{
+    setStatus(status: ReservationStatus): void{
         this.status = status;
     }
     setTotal(total: number): void{
         this.total = total;
+    }
+
+    addSeat(seat: seats): void{
+        this.seat.push(seat);
+    }
+
+    calculateTotal(): number{
+        const price = this.getScreening().ticketPrice;
+        return this.getSeat().length * price;
+    }
+    
+    cancelReservation(): void{
+        this.setStatus("Canceled");
     }
 }
