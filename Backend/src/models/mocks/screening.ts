@@ -21,6 +21,16 @@ export class Screening extends Model<ScreeningAttributes, ScreeningCreationAttri
   public end!: Date;
   public ticketPrice!: number;
 
+  //getters y setters
+
+  get ticket_Price(): number {
+    return this.ticketPrice;
+  }
+  set ticket_Price(value: number) {
+    this.ticketPrice = value;
+  }
+  
+
   // Métodos de instancia
 
   public getDuration(): number {
