@@ -1,20 +1,8 @@
-export class Room {
-  private id: string;
-  private name: string;
-  private capacity: number;
-  private type: string;
+import {Room} from './entities/room.entity';
 
-  constructor(id: string, name: string, capacity: number, type: string) {
-    this.id = id;
-    this.name = name;
-    this.capacity = capacity;
-    this.type = type;
-  }
+export const rooms: Room[] = [
+    new Room('1', 'Sala 1', 100, '2D'),
+    new Room('2', 'Sala 2', 150, '3D'),
+    new Room('3', 'Sala 3', 200, 'IMAX'),
+];
 
-getType(): string {
-    return this.type;
-  }
-isFull(currentOccupancy: number): boolean {
-    return currentOccupancy >= this.capacity;
-  }
-}
