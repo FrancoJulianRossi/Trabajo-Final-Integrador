@@ -6,6 +6,6 @@ class RoomController {
         return rooms;
     }
     public getRoomById(id: string): Room | undefined {
-        return rooms.find(room => room.id === id);
+        return rooms.find(room => room.getId() === id);
     }
 }
