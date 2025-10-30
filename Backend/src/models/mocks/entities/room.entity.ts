@@ -11,6 +11,10 @@ export class Room {
     this.type = type;
   }
 
+getId(): string {
+    return this.id;
+  }
+
 getName(): string {
     return this.name;
   }
