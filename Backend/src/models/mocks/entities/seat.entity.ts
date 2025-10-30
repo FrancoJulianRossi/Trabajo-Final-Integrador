@@ -1,7 +1,9 @@
 export class seat{
+
     id: number;
     row: number;
     column: number;
+
 
     constructor(id: number, row: number, column: number) {
         this.id = id;
