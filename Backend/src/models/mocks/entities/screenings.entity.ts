@@ -44,38 +44,4 @@ export class ScreeningEntity {
     isAvailable(): boolean {
         return Date.now() < new Date(this.start).getTime();
     }
-
-    toJSON(): Record<string, any> {
-        return {
-            idScreening: this.idScreening,
-            date: this.date.toISOString(),
-            start: this.start.toISOString(),
-            end: this.end.toISOString(),
-            ticketPrice: this.ticketPrice,
-        };
-    }
 }
-
-export const screeningsMock: ScreeningEntity[] = [
-    new ScreeningEntity(
-        1,
-        new Date('2025-11-01'),
-        new Date('2025-11-01T18:00:00'),
-        new Date('2025-11-01T20:00:00'),
-        350.0
-    ),
-    new ScreeningEntity(
-        2,
-        new Date('2025-11-01'),
-        new Date('2025-11-01T21:00:00'),
-        new Date('2025-11-01T23:00:00'),
-        400.0
-    ),
-    new ScreeningEntity(
-        3,
-        new Date('2025-11-02'),
-        new Date('2025-11-02T16:00:00'),
-        new Date('2025-11-02T18:15:00'),
-        300.0
-    ),
-];
