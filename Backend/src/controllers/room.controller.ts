@@ -5,7 +5,7 @@ class RoomController {
     public getAllRooms(): Room[] {
         return rooms;
     }
-    public getRoomById(id: string): Room | undefined {
+    public getRoomById(id: number): Room | undefined {
         return rooms.find(room => room.getId() === id);
     }
 }
