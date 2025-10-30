@@ -1,15 +1,15 @@
 export class seat{
-    id: string;
+    id: number;
     row: number;
     column: number;
 
-    constructor(id: string, row: number, column: number) {
+    constructor(id: number, row: number, column: number) {
         this.id = id;
         this.row = row;
         this.column = column;
     }
 
-    getId(): string {
+    getId(): number {
         return this.id;
     }
 
