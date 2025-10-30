@@ -1,7 +1,7 @@
 export class seat{
-    id: string;
-    row: number;
-    column: number;
+    protected id: string;
+    protected row: number;
+    protected column: number;
 
     constructor(id: string, row: number, column: number) {
         this.id = id;
