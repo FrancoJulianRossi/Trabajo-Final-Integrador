@@ -1,6 +1,6 @@
 // import { User } from "./user.entity";
-import { Screening } from "../screening";
-import { seats } from "../seat.model";
+import { ScreeningEntity } from "./screening.entity";
+import { seat } from "./seat.entity";  
 
 export type ReservationStatus = "Pending" | "Paid" | "Canceled";
 
@@ -11,8 +11,8 @@ export class Reservation{
         protected status: ReservationStatus,
         protected total: number,
         // protected user: User,
-        protected screening: Screening,
-        protected seat : seats[] = []
+        protected screening: ScreeningEntity,
+        protected seat : seat[] = []
     ){}
 
     getIdReservation(): number{
@@ -30,10 +30,10 @@ export class Reservation{
     // getUser(): User{
     //     return this.user;
     // }
-    getScreening(): Screening{
+    getScreening(): ScreeningEntity{
         return this.screening;
     }
-    getSeat(): seats[]{
+    getSeat(): seat[]{
         return [...this.seat];
     }
 
@@ -47,12 +47,12 @@ export class Reservation{
         this.total = total;
     }
 
-    addSeat(seat: seats): void{
+    addSeat(seat: seat): void{
         this.seat.push(seat);
     }
 
     calculateTotal(): number{
-        const price = this.getScreening().ticketPrice;
+        const price = this.getScreening().getTicketPrice();
         return this.getSeat().length * price;
     }
     
