@@ -1,4 +1,4 @@
-import { ScreeningEntity } from "./entities/screenings.entity";
+import { ScreeningEntity } from "./entities/screening.entity";
 
 export const screeningMock = new ScreeningEntity(
     1,
