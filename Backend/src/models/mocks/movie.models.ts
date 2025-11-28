@@ -22,6 +22,27 @@ export class MoviesModel {
         this.id = 2;
     }
 
+    seed(initial: Movie[]) {
+        this.data = initial.map(
+            (m, idx) =>
+                new Movie(
+                    m.idMovie || idx + 1,
+                    m.name,
+                    m.getDuration(),
+                    m.description,
+                    m.genre,
+                    m.categorie,
+                    m.director,
+                    m.lenguage,
+                    m.isSubtitled(),
+                    m.poster
+                )
+        );
+        this.id = this.data.length
+            ? Math.max(...this.data.map((x) => x.idMovie)) + 1
+            : 1;
+    }
+
     list(): Promise<Movie[]> {
         return Promise.resolve(this.data);
     }
@@ -34,30 +55,30 @@ export class MoviesModel {
     }
 
     create(movie: Movie): Promise<Movie> {
-    return new Promise((resolve, reject) => {
-        const exists = this.data.find(
-            (m) => m.name.toLowerCase() === movie.name.toLowerCase()
-        );
-        if (exists) {
-            reject(new Error("La película ya existe"));
-        } else {
-            const newMovie = new Movie(
-                this.id++,
-                movie.name,
-                movie.getDuration(),
-                movie.description,
-                movie.genre,
-                movie.categorie,
-                movie.director,
-                movie.lenguage,
-                movie.isSubtitled(),
-                movie.poster
+        return new Promise((resolve, reject) => {
+            const exists = this.data.find(
+                (m) => m.name.toLowerCase() === movie.name.toLowerCase()
             );
-            this.data.push(newMovie);
-            resolve(newMovie);
-        }
-    });
-}
+            if (exists) {
+                reject(new Error("La película ya existe"));
+            } else {
+                const newMovie = new Movie(
+                    this.id++,
+                    movie.name,
+                    movie.getDuration(),
+                    movie.description,
+                    movie.genre,
+                    movie.categorie,
+                    movie.director,
+                    movie.lenguage,
+                    movie.isSubtitled(),
+                    movie.poster
+                );
+                this.data.push(newMovie);
+                resolve(newMovie);
+            }
+        });
+    }
 
     update(id: number, updatedMovie: Movie): Promise<Movie> {
         return new Promise((resolve, reject) => {
@@ -90,7 +111,7 @@ export class MoviesModel {
                 reject(new Error("Película no encontrada"));
                 return;
             }
-            
+
             this.data = this.data.filter((m) => m.idMovie !== id);
             resolve(movie);
         });
@@ -98,3 +119,4 @@ export class MoviesModel {
 }
 
 export default new MoviesModel();
+
