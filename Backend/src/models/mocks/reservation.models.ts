@@ -1,34 +1,43 @@
 import { Reservation } from "./entities/reservation.entity";
-import { Screening } from "./screening";
+import { ScreeningEntity } from "./entities/screening.entity";
+import { seat } from "./entities/seat.entity";
+import { screeningMock } from "./screening.models";
 import { seats } from "./seat.model";
 
 export class ReservationMock {
-    private data: Reservation[];
-    constructor() {
-        this.data = [];
+  private data: Reservation[];
+  constructor() {
+    this.data = [];
 
-        const screening = Screening.build({
-            idScreening: 1,
-            date: new Date(),
-            start: new Date(),
-            end: new Date(Date.now() + 3600000),
-            ticketPrice: 10
-        });
+    // reuse shared mocks when available
+    const screening = screeningMock as unknown as ScreeningEntity;
 
-        const seat1 = new seats("A1", 1, 1);
-        const seat2 = new seats("A2", 1, 2);
+    const seat1 = seats[0];
+    const seat2 = seats[1];
 
-        this.data.push(
-            new Reservation(1, new Date(), "Pending", 0, screening, seat1 as unknown as any),
-            new Reservation(2, new Date(), "Pending", 0, screening, seat2 as unknown as any)
-        )
-    }
+    this.data.push(
+      new Reservation(1, new Date(), "Pending", 0, screening, [
+        seat1,
+      ] as unknown as any),
+      new Reservation(2, new Date(), "Pending", 0, screening, [
+        seat2,
+      ] as unknown as any)
+    );
+  }
 
-    getReservations(): Reservation[] {
-        return this.data;
-    }
+  list(): Reservation[] {
+    // return a shallow copy to avoid external mutation
+    return [...this.data];
+  }
 
+  getNextId(): number {
+    if (this.data.length === 0) return 1;
+    const ids = this.data.map((r) => r.getIdReservation());
+    return Math.max(...ids) + 1;
+  }
 
-
-
+  postReservation(reservation: Reservation): Reservation {
+    this.data.push(reservation);
+    return reservation;
+  }
 }

@@ -1,14 +1,18 @@
 export class Room {
-  private id: string;
-  private name: string;
-  private capacity: number;
-  private type: string;
+  protected id: number;
+  protected name: string;
+  protected capacity: number;
+  protected type: string;
 
-  constructor(id: string, name: string, capacity: number, type: string) {
+  constructor(id: number, name: string, capacity: number, type: string) {
     this.id = id;
     this.name = name;
     this.capacity = capacity;
     this.type = type;
+  }
+
+getId(): number {
+    return this.id;
   }
 
 getName(): string {
