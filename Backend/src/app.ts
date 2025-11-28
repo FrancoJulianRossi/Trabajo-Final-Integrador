@@ -8,7 +8,7 @@ app.use(express.json());
 
 // simple healthcheck
 app.get("/", (req: Request, res: Response) => {
-	res.json({ status: "ok" });
+  res.json({ status: "ok" });
 });
 
 // mount reservation routes
@@ -16,9 +16,9 @@ app.use("/", router);
 
 // basic error handler
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
-	// tslint:disable-next-line:no-console
-	console.error(err);
-	res.status(500).json({ error: "Internal Server Error" });
+  // tslint:disable-next-line:no-console
+  console.error(err);
+  res.status(500).json({ error: "Internal Server Error" });
 });
 
 export default app;
