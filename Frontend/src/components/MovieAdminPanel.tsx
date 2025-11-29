@@ -25,7 +25,7 @@ interface Movie {
     Poster: string;
 }
 
-export const AdminPanel: React.FC = () => {
+export const MovieAdminPanel: React.FC = () => {
     const [movies, setMovies] = useState<Movie[]>([]);
     const [filteredMovies, setFilteredMovies] = useState<Movie[]>([]);
     const [newMovie, setNewMovie] = useState<Movie>({
@@ -867,3 +867,5 @@ export const AdminPanel: React.FC = () => {
         </Container>
     );
 };
+
+export default MovieAdminPanel;

@@ -1,9 +1,9 @@
-import { AdminPanel } from './components/MovieAdminPanel'
+import { MovieAdminPanel } from './components/MovieAdminPanel'
 import './App.css'
 
 function App() {
   return (
-    <AdminPanel />
+    <MovieAdminPanel />
   )
 }
 
