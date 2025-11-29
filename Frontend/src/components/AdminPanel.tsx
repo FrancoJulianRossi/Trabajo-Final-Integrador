@@ -38,6 +38,7 @@ export const AdminPanel: React.FC = () => {
         </Button>
         <Button
           variant={view === "bookings" ? "primary" : "outline-primary"}
+          className="me-2"
           onClick={() => setView("bookings")}
         >
           Reservas

@@ -132,7 +132,7 @@ const BookingList: React.FC = () => {
       r.customerName ?? "",
       r.screening?.date ?? "",
       r.screening?.start ?? "",
-      r.seats.map((s) => `${s.row}-${s.column}`).join("|") || "",
+      (r.seats || []).map((s) => `${s.row}-${s.column}`).join("|") || "",
       r.createdAt || "",
     ]);
     const csv = [header, ...rows]
@@ -230,7 +230,9 @@ const BookingList: React.FC = () => {
               <td>{r.customerName}</td>
               <td>{r.screening?.date}</td>
               <td>{r.screening?.start}</td>
-              <td>{r.seats.map((s) => `${s.row}-${s.column}`).join(", ")}</td>
+              <td>
+                {(r.seats || []).map((s) => `${s.row}-${s.column}`).join(", ")}
+              </td>
               <td>
                 <Button size="sm" onClick={() => setSelected(r)}>
                   Ver

@@ -41,7 +41,9 @@ const BookingView: React.FC<{
       </p>
       <p>
         <strong>Asientos:</strong>{" "}
-        {reservation.seats.map((s) => `${s.row}-${s.column}`).join(", ")}
+        {(reservation.seats || [])
+          .map((s) => `${s.row}-${s.column}`)
+          .join(", ")}
       </p>
       <p>
         <small>Creada: {reservation.createdAt}</small>
