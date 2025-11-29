@@ -4,10 +4,11 @@ import UserList from "./UserList";
 import BookingList from "./BookingList";
 import AdminPanelScreenings from "./AdminPanelScreenings";
 import MovieAdminPanel from "./MovieAdminPanel";
+import AdminPanelRoom from "./AdminPanelRoom";
 
 export const AdminPanel: React.FC = () => {
   const [view, setView] = useState<
-    "movies" | "screening" | "users" | "bookings"
+    "movies" | "screening" | "users" | "bookings" | "rooms"
   >("users");
 
   return (
@@ -41,12 +42,20 @@ export const AdminPanel: React.FC = () => {
         >
           Reservas
         </Button>
+        <Button
+          variant={view === "rooms" ? "primary" : "outline-primary"}
+          className="me-2"
+          onClick={() => setView("rooms")}
+        >
+          Salas
+        </Button>
       </div>
 
       {view === "movies" && <MovieAdminPanel />}
       {view === "screening" && <AdminPanelScreenings />}
       {view === "users" && <UserList />}
       {view === "bookings" && <BookingList />}
+      {view === "rooms" && <AdminPanelRoom />}
     </Container>
   );
 };
