@@ -36,7 +36,7 @@ Backend
    ```
 3. Ejecutar (ejemplo):
    ```sh
-   npm run dev
+   npm run start
    ```
 
 Frontend
@@ -215,9 +215,11 @@ Integrantes
 
 .Manuel Galdames
 
-.Santiago Recaria
+.Santiago Recari
 
 .Martin Andres Garnica
-=======
+
+<br>
+
 # Trabajo-Final-Integrador
 
