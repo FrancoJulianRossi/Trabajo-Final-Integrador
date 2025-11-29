@@ -1,24 +1,24 @@
-import express, { Request, Response, NextFunction } from "express";
-import router from "./routes/reservation.route";
+import express from "express";
+import cors from "cors";
+import movieRoutes from "./routes/movie.routes";
+import authRoutes from "./routes/auth.routes";
+import screeningRoutes from "./routes/screening.routes";
+import userRoutes from "./routes/user.routes";
+import bookingRoutes from "./routes/booking.routes";
+import seedRoutes from "./routes/seed.routes";
 
 const app = express();
 
-// middleware
+app.use(cors({ origin: "*", methods: ["GET", "POST", "PUT", "DELETE"], credentials: true }));
 app.use(express.json());
 
-// simple healthcheck
-app.get("/", (req: Request, res: Response) => {
-  res.json({ status: "ok" });
-});
+app.use("/api", movieRoutes);
+app.use("/api", authRoutes);
+app.use("/api", screeningRoutes);
+app.use("/api", userRoutes);
+app.use("/api", bookingRoutes);
+app.use("/api", seedRoutes);
 
-// mount reservation routes
-app.use("/", router);
-
-// basic error handler
-app.use((err: any, req: Request, res: Response, next: NextFunction) => {
-  // tslint:disable-next-line:no-console
-  console.error(err);
-  res.status(500).json({ error: "Internal Server Error" });
-});
+app.get("/", (req, res) => res.send("API Mock Server running"));
 
 export default app;
