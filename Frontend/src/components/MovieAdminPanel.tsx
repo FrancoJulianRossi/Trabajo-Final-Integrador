@@ -25,7 +25,7 @@ interface Movie {
     Poster: string;
 }
 
-export const MovieAdminPanel: React.FC = () => {
+const MovieAdminPanel: React.FC = () => {
     const [movies, setMovies] = useState<Movie[]>([]);
     const [filteredMovies, setFilteredMovies] = useState<Movie[]>([]);
     const [newMovie, setNewMovie] = useState<Movie>({
@@ -73,14 +73,14 @@ export const MovieAdminPanel: React.FC = () => {
         // Búsqueda por nombre
         if (searchTerm) {
             filtered = filtered.filter((m) =>
-                m.Name.toLowerCase().includes(searchTerm.toLowerCase())
+                (m.Name || "").toLowerCase().includes(searchTerm.toLowerCase())
             );
         }
 
         // Filtro por género
         if (selectedGenre) {
             filtered = filtered.filter((m) =>
-                m.Genre.toLowerCase().includes(selectedGenre.toLowerCase())
+                (m.Genre || "").toLowerCase().includes(selectedGenre.toLowerCase())
             );
         }
 
@@ -92,7 +92,7 @@ export const MovieAdminPanel: React.FC = () => {
         // Filtro por idioma
         if (selectedLanguage) {
             filtered = filtered.filter((m) =>
-                m.Lenguage.toLowerCase().includes(selectedLanguage.toLowerCase())
+                (m.Lenguage || "").toLowerCase().includes(selectedLanguage.toLowerCase())
             );
         }
 

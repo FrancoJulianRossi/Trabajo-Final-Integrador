@@ -37,10 +37,10 @@ interface Seat {
 function AppContent() {
   const { user, logout } = useAuth();
   // considerar distintos formatos de role: string "admin" o boolean true
-  const isAdmin =
+  const isAdmin = Boolean(
     user &&
-    ((typeof user.role === "string" && user.role.toLowerCase() === "admin") ||
-      user.role === true);
+      (String(user.role).toLowerCase() === "admin" || user.role === true)
+  );
   const [screen, setScreen] = useState<
     "login" | "cartelera" | "asientos" | "compra" | "historial" | "adminpanelscreening" | "admin"
   >("login");
