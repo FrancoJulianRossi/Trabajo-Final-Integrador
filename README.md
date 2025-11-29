@@ -145,7 +145,7 @@ erDiagram
   ROOM ||--o{ SEAT : "contains"
   SCREENING ||--o{ RESERVATION : "receives"
   RESERVATION ||--o{ BOOKING : "becomes"
-  SEAT ||--o{ RESERVATION : "reserved_via" %% 
+  SEAT ||--o{ RESERVATION : "reserved_via" 
 ```
 
 Notas sobre el modelo de datos
