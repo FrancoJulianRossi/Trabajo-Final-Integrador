@@ -145,7 +145,7 @@ erDiagram
   ROOM ||--o{ SEAT : "contains"
   SCREENING ||--o{ RESERVATION : "receives"
   RESERVATION ||--o{ BOOKING : "becomes"
-  SEAT ||--o{ RESERVATION : "reserved_via" %% implies join table in DB for seats per reservation
+  SEAT ||--o{ RESERVATION : "reserved_via" %% 
 ```
 
 Notas sobre el modelo de datos
