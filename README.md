@@ -34,7 +34,11 @@ Backend
    ```sh
    npm install
    ```
-3. Ejecutar (ejemplo):
+3. Compilar:
+   ```sh
+   npm run build
+   ```
+4. Ejecutar (ejemplo):
    ```sh
    npm run start
    ```
