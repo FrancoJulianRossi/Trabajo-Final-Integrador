@@ -137,6 +137,15 @@ erDiagram
     string paymentStatus
     datetime bookedAt
   }
+
+  %% Relaciones
+  USER ||--o{ RESERVATION : "makes"
+  MOVIE ||--o{ SCREENING : "has"
+  ROOM ||--o{ SCREENING : "hosts"
+  ROOM ||--o{ SEAT : "contains"
+  SCREENING ||--o{ RESERVATION : "receives"
+  RESERVATION ||--o{ BOOKING : "becomes"
+  SEAT ||--o{ RESERVATION : "reserved_via" %% implies join table in DB for seats per reservation
 ```
 
 Notas sobre el modelo de datos
