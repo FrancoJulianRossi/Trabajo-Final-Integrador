@@ -49,12 +49,18 @@ const BookingList: React.FC = () => {
     const fetchReservations = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`${API_BASE}/bookings`);
-        if (res.ok) {
+        if (import.meta.env.VITE_STATIC_MOCKS) {
+          const res = await fetch(`/mocks/bookings.json`);
           const data = await res.json();
           setItems(Array.isArray(data) ? data : []);
         } else {
-          setItems([]);
+          const res = await fetch(`${API_BASE}/bookings`);
+          if (res.ok) {
+            const data = await res.json();
+            setItems(Array.isArray(data) ? data : []);
+          } else {
+            setItems([]);
+          }
         }
       } catch (err) {
         setItems([]);
@@ -95,6 +101,10 @@ const BookingList: React.FC = () => {
   const handleDelete = async (id: number) => {
     // try backend DELETE, otherwise remove locally
     try {
+      if (import.meta.env.VITE_STATIC_MOCKS) {
+        setItems((s) => s.filter((i) => i.id !== id));
+        return;
+      }
       const res = await fetch(`${API_BASE}/bookings/${id}`, {
         method: "DELETE",
       });

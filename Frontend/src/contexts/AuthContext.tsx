@@ -1,11 +1,12 @@
 import React, { createContext, useContext, useState } from "react";
 import type { ReactNode } from "react";
+import * as mockClient from "../api/mockClient";
 
 export interface User {
   idUser: number;
   name: string;
   email: string;
-  role: boolean;
+  role: any;
 }
 
 interface AuthContextType {
@@ -29,16 +30,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     localStorage.getItem("token")
   );
 
-  const API_BASE = "http://127.0.0.1:3000/api";
-
   const login = async (email: string, password: string) => {
-    const res = await fetch(`${API_BASE}/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-    if (!res.ok) throw new Error("Login failed");
-    const data = await res.json();
+    // Use mockClient which internally switches based on VITE_STATIC_MOCKS
+    const data = await mockClient.login(email, password);
     setToken(data.token);
     setUser(data.user);
     localStorage.setItem("token", data.token);
@@ -46,14 +40,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const register = async (name: string, email: string, password: string) => {
-    const res = await fetch(`${API_BASE}/auth/register`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, password }),
-    });
-    if (!res.ok) throw new Error("Registration failed");
-    // Auto-login after registration
-    await login(email, password);
+    const data = await mockClient.register(name, email, password);
+    setToken(data.token);
+    setUser(data.user);
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("user", JSON.stringify(data.user));
   };
 
   const logout = () => {

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Container, Row, Col, Card, Form, Button } from "react-bootstrap";
+import { getMovies, getScreenings } from "../api/mockClient";
 
 interface Movie {
   IdMovie: number;
@@ -27,15 +28,10 @@ export const Cartelera: React.FC<{
   const [screenings, setScreenings] = useState<Screening[]>([]);
   const [filter, setFilter] = useState("");
 
-  const API_BASE = "http://127.0.0.1:3000/api";
-
   useEffect(() => {
     const fetchMovies = async () => {
-      const res = await fetch(`${API_BASE}/movies`);
-      if (res.ok) {
-        const data = await res.json();
-        setMovies(data);
-      }
+      const data = await getMovies();
+      setMovies(data || []);
     };
     fetchMovies();
   }, []);
@@ -43,11 +39,8 @@ export const Cartelera: React.FC<{
   useEffect(() => {
     if (selectedMovie) {
       const fetchScreenings = async () => {
-        const res = await fetch(`${API_BASE}/screenings`);
-        if (res.ok) {
-          const data = await res.json();
-          setScreenings(data);
-        }
+        const data = await getScreenings();
+        setScreenings(data || []);
       };
       fetchScreenings();
     }

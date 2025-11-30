@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Container, Row, Col, Button, Badge } from "react-bootstrap";
+import { getSeats } from "../api/mockClient";
 
 interface Seat {
   id: number;
@@ -31,17 +32,10 @@ export const SeleccionAsientos: React.FC<{
     []
   );
   const [selected, setSelected] = useState<Seat[]>([]);
-  const API_BASE = "http://127.0.0.1:3000/api";
-
   useEffect(() => {
     const fetch_occupied = async () => {
-      const res = await fetch(
-        `${API_BASE}/screenings/${screening.idScreening}/seats`
-      );
-      if (res.ok) {
-        const data = await res.json();
-        setOccupied(data.occupied || []);
-      }
+      const data = await getSeats(screening.idScreening);
+      setOccupied(data?.occupied || []);
     };
     fetch_occupied();
   }, [screening]);

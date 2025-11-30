@@ -38,11 +38,16 @@ function AppContent() {
   const { user, logout } = useAuth();
   // considerar distintos formatos de role: string "admin" o boolean true
   const isAdmin = Boolean(
-    user &&
-      (String(user.role).toLowerCase() === "admin" || user.role === true)
+    user && (String(user.role).toLowerCase() === "admin" || user.role === true)
   );
   const [screen, setScreen] = useState<
-    "login" | "cartelera" | "asientos" | "compra" | "historial" | "adminpanelscreening" | "admin"
+    | "login"
+    | "cartelera"
+    | "asientos"
+    | "compra"
+    | "historial"
+    | "adminpanelscreening"
+    | "admin"
   >("login");
   const [selectedScreening, setSelectedScreening] = useState<Screening | null>(
     null
@@ -86,14 +91,18 @@ function AppContent() {
               <Nav.Link
                 href="#"
                 onClick={() => setScreen("cartelera")}
-                className={screen === "cartelera" ? "text-warning fw-bold" : "text-white"}
+                className={
+                  screen === "cartelera" ? "text-warning fw-bold" : "text-white"
+                }
               >
                 Cartelera
               </Nav.Link>
               <Nav.Link
                 href="#"
                 onClick={() => setScreen("historial")}
-                className={screen === "historial" ? "text-warning fw-bold" : "text-white"}
+                className={
+                  screen === "historial" ? "text-warning fw-bold" : "text-white"
+                }
               >
                 Mis Reservas
               </Nav.Link>
@@ -101,18 +110,10 @@ function AppContent() {
               {isAdmin && (
                 <Nav.Link
                   href="#"
-                  onClick={() => setScreen("adminpanelscreening")}
-                  className={screen === "adminpanelscreening" ? "text-warning fw-bold" : "text-white"}
-                >
-                  Screenings
-                </Nav.Link>
-              )}
-              
-              {isAdmin && (
-                <Nav.Link
-                  href="#"
                   onClick={() => setScreen("admin")}
-                  className={screen === "admin" ? "text-warning fw-bold" : "text-white"}
+                  className={
+                    screen === "admin" ? "text-warning fw-bold" : "text-white"
+                  }
                 >
                   Admin
                 </Nav.Link>
@@ -166,7 +167,9 @@ function AppContent() {
 
         {screen === "historial" && <Historial />}
         {screen === "admin" && isAdmin && <AdminPanel />}
-        {screen === "adminpanelscreening" && isAdmin && <AdminPanelScreenings />}
+        {screen === "adminpanelscreening" && isAdmin && (
+          <AdminPanelScreenings />
+        )}
       </Container>
 
       <footer className="bg-dark text-white text-center py-3 mt-4">
