@@ -1,20 +1,34 @@
-import { seat } from "./entities/seat.entity";
+import { Table, Column, Model, DataType, ForeignKey, BelongsTo } from "sequelize-typescript";
+import { Room } from "./room.model";
 
-export let seats: seat[] = [
-  new seat(1, 1, 1),
-  new seat(2, 1, 2),
-  new seat(3, 1, 3),
-  new seat(4, 1, 4),
-  new seat(5, 1, 5),
-  new seat(6, 2, 1),
-  new seat(7, 2, 2),
-  new seat(8, 2, 3),
-  new seat(9, 2, 4),
-  new seat(10, 2, 5),
-];
+@Table({
+  tableName: "seats",
+  timestamps: false,
+})
+export class Seat extends Model {
+  @Column({
+    type: DataType.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+  })
+  declare idSeat: number;
 
-export function seedSeats(initial: seat[]) {
-  seats = initial.map(
-    (s, idx) => new seat(s["id"] ?? idx + 1, s["row"] ?? 1, s["column"] ?? 1)
-  );
+  @Column({
+    type: DataType.INTEGER,
+    allowNull: false,
+  })
+  declare row: number;
+
+  @Column({
+    type: DataType.INTEGER,
+    allowNull: false,
+  })
+  declare column: number;
+
+  @ForeignKey(() => Room)
+  @Column
+  declare roomId: number;
+
+  @BelongsTo(() => Room)
+  declare room: Room;
 }
