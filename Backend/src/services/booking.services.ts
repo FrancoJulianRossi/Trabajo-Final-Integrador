@@ -1,45 +1,102 @@
-import ReservationMock from "../models/mocks/reservation.models";
-import { ScreeningEntity } from "../models/mocks/entities/screening.entity";
-import { seat } from "../models/mocks/entities/seat.entity";
+import { Reservation } from "../models/reservation.model";
+import { ReservationSeat } from "../models/reservation-seat.model";
+import { Screening } from "../models/screening.model";
+import { Seat } from "../models/seat.model";
+import { sequelize } from "../config/database";
+import { Op } from "sequelize";
 
 export class BookingService {
-  // Simple in-memory lock per screening to simulate concurrency control
-  private locks: Map<number, boolean> = new Map();
-
-  listReservations() {
-    return ReservationMock.getReservations();
+  async listReservations(): Promise<Reservation[]> {
+    return await Reservation.findAll({
+      include: ["screening", "reservationSeats"],
+    });
   }
 
-  getReservationById(id: number) {
-    return ReservationMock.getById(id);
+  async getReservationById(id: number): Promise<Reservation | null> {
+    return await Reservation.findByPk(id, {
+      include: ["screening", "reservationSeats"],
+    });
   }
 
-  async createReservation(screening: ScreeningEntity, seatsList: seat[]) {
-    const screeningId = screening.getIdScreening?.();
-    if (typeof screeningId !== "number") {
-      throw new Error("Invalid screening id");
-    }
-
-    // If locked, reject to simulate concurrent access
-    if (this.locks.get(screeningId)) {
-      throw new Error("Screening is temporarily locked, try again");
-    }
-
-    // Acquire lock
-    this.locks.set(screeningId, true);
-
+  async createReservation(
+    screeningId: number,
+    userId: number,
+    seats: { row: number; column: number }[],
+  ): Promise<Reservation> {
+    const t = await sequelize.transaction();
     try {
-      // Simulate async operation (DB write)
-      const created = ReservationMock.addReservation(screening, seatsList);
-      return created;
-    } finally {
-      // Release lock
-      this.locks.delete(screeningId);
+      const screening = await Screening.findByPk(screeningId, {
+        transaction: t,
+      });
+      if (!screening) throw new Error("Screening not found");
+
+      // Find seats based on row/column and roomId
+      const seatInstances: Seat[] = [];
+      for (const s of seats) {
+        const seat = await Seat.findOne({
+          where: { roomId: screening.roomId, row: s.row, column: s.column },
+          transaction: t,
+        });
+        if (!seat)
+          throw new Error(`Seat at row ${s.row} col ${s.column} not found`);
+        seatInstances.push(seat);
+      }
+
+      // Check if any of these seats are already reserved for this screening
+      const occupied = await ReservationSeat.findAll({
+        where: { seatId: seatInstances.map((s) => s.idSeat) },
+        include: [
+          {
+            model: Reservation,
+            where: {
+              screeningId: screeningId,
+              status: { [Op.or]: ["Pending", "Confirmed", "Paid"] },
+            },
+          },
+        ],
+        transaction: t,
+      });
+
+      if (occupied.length > 0)
+        throw new Error("Some seats are already occupied");
+
+      const total = seatInstances.length * screening.ticketPrice;
+
+      const reservation = await Reservation.create(
+        {
+          screeningId,
+          userId,
+          reservationDate: new Date(),
+          status: "Confirmed",
+          total,
+        },
+        { transaction: t },
+      );
+
+      const reservationSeatsData = seatInstances.map((s) => ({
+        reservationId: reservation.idReservation,
+        seatId: s.idSeat,
+      }));
+
+      await ReservationSeat.bulkCreate(reservationSeatsData, {
+        transaction: t,
+      });
+
+      await t.commit();
+
+      // Reload to include relations if needed, or return plain
+      return reservation;
+    } catch (error) {
+      await t.rollback();
+      throw error;
     }
   }
 
-  cancelReservation(id: number) {
-    return ReservationMock.cancelReservation(id);
+  async cancelReservation(id: number): Promise<void> {
+    const reservation = await Reservation.findByPk(id);
+    if (!reservation) throw new Error("Reservation not found");
+    reservation.status = "Canceled";
+    await reservation.save();
   }
 }
 
