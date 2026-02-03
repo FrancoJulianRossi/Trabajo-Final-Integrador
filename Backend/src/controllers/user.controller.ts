@@ -1,6 +1,5 @@
 import { UserService } from "../services/user.services";
 import { Request, Response } from "express";
-import { User } from "../models/mocks/entities/user.entity";
 
 export class UserController {
   private userService: UserService;
@@ -9,9 +8,13 @@ export class UserController {
   }
 
   async createUser(req: Request, res: Response): Promise<Response> {
-    const { idUser, name, email, password, role = 1 } = req.body;
-    const newUser = new User(idUser, name, email, password, role);
-    this.userService.createUser(newUser);
-    return res.status(201).json({ message: "User created successfully" });
+    try {
+      const { name, email, password, role = false } = req.body;
+      await this.userService.createUser({ name, email, password, role });
+      return res.status(201).json({ message: "User created successfully" });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: "Error creating user" });
+    }
   }
 }
