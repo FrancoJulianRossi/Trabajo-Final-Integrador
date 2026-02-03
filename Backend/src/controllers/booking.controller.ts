@@ -1,54 +1,52 @@
 import { Request, Response } from "express";
-import bookingService from "../services/booking.services";
-import { ScreeningEntity } from "../models/mocks/entities/screening.entity";
-import { seat } from "../models/mocks/entities/seat.entity";
+import ReservationService from "../services/reservation.service";
 
-export const getBookings = (req: Request, res: Response) => {
-  const reservations = bookingService.listReservations();
-  return res.status(200).json(reservations);
-};
-
-export const createBooking = async (req: Request, res: Response) => {
-  const { screening, seats } = req.body;
-
-  if (!screening || !seats) {
-    return res.status(400).json({ message: "Missing screening or seats" });
+export class ReservationController {
+  private reservationService: ReservationService;
+  constructor() {
+    this.reservationService = new ReservationService();
   }
 
-  const screeningEntity = new ScreeningEntity(
-    screening.idScreening ?? 0,
-    screening.date,
-    screening.start,
-    screening.end,
-    screening.ticketPrice ?? 0
-  );
-
-  const seatEntities: seat[] = Array.isArray(seats)
-    ? seats.map(
-        (s: any, idx: number) =>
-          new seat(s.id ?? idx + 1, s.row ?? 1, s.column ?? 1)
-      )
-    : [];
-
-  try {
-    const created = await bookingService.createReservation(
-      screeningEntity,
-      seatEntities
-    );
-    return res.status(201).json(created);
-  } catch (err: any) {
-    if (!err) {
-      return res.status(500).json({ message: "Unknown error" });
+  // Express handler: GET /reservation
+  async listHandler(req: Request, res: Response): Promise<void> {
+    try {
+      const reservations = await this.reservationService.listReservations();
+      res.status(200).json(reservations);
+    } catch (err) {
+      // tslint:disable-next-line:no-console
+      console.error(err);
+      res.status(500).json({ error: "Failed to list reservations" });
     }
-
-    if (err.message && err.message.startsWith("Seat already occupied")) {
-      return res.status(409).json({ message: err.message });
-    }
-
-    if (err.message && err.message.includes("locked")) {
-      return res.status(423).json({ message: err.message });
-    }
-
-    return res.status(500).json({ message: err.message || "Unknown error" });
   }
-};
+
+  // Express handler: POST /reservation
+  async createHandler(req: Request, res: Response): Promise<void> {
+    try {
+      const body = req.body;
+
+      // Basic validation: ensure screening and seat are present
+      if (!body || typeof body !== "object") {
+        res.status(400).json({ error: "Invalid payload" });
+        return;
+      }
+
+      const created = await this.reservationService.createReservation(body);
+      res.status(201).json(created);
+    } catch (err: any) {
+      // If the service throws a validation-like error, map to 400
+      // otherwise 500
+      // tslint:disable-next-line:no-console
+      console.error(err);
+      if (err && err.name === "ValidationError") {
+        res.status(400).json({ error: err.message });
+      } else {
+        res.status(500).json({ error: "Failed to create reservation" });
+      }
+    }
+  }
+}
+
+// export an instance for convenience when wiring routes
+export const reservationController = new ReservationController();
+
+export default ReservationController;
