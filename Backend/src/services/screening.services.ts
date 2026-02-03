@@ -3,87 +3,67 @@ getScreenings
 createScreening
 updateScreening
 deleteScreening */
-import {
-  screeningMock,
-  screeningMockUpdated,
-} from "../models/mocks/screening.models";
-import { ScreeningEntity } from "../models/mocks/entities/screening.entity";
-import ReservationMock from "../models/mocks/reservation.models";
+import { Screening } from "../models/screening.model";
+import { Reservation } from "../models/reservation.model";
+import { ReservationSeat } from "../models/reservation-seat.model";
+import { Seat } from "../models/seat.model";
+import { Op } from "sequelize";
 
 export class ScreeningService {
-  private screenings: ScreeningEntity[];
-  constructor() {
-    // seed with available mocks
-    this.screenings = [screeningMock, screeningMockUpdated];
+  
+  async getScreeningById(id: number): Promise<Screening | null> {
+    return await Screening.findByPk(id, { include: ["movie", "room"] });
   }
 
-  public getScreeningById(id: number): ScreeningEntity | null {
-    return this.screenings.find((s) => s.getIdScreening() === id) || null;
+  async getScreenings(): Promise<Screening[]> {
+    return await Screening.findAll({ include: ["movie", "room"] });
   }
 
-  public getScreenings(): ScreeningEntity[] {
-    return [...this.screenings];
+  async createScreening(data: Partial<Screening>): Promise<Screening> {
+    return await Screening.create(data);
   }
 
-  public createScreening(screening: ScreeningEntity): ScreeningEntity {
-    const newId = this.screenings.length
-      ? Math.max(...this.screenings.map((s) => s.getIdScreening())) + 1
-      : 1;
-    const newScreening = new ScreeningEntity(
-      newId,
-      screening.getDate(),
-      screening.getStart(),
-      screening.getEnd(),
-      screening.getTicketPrice()
-    );
-    this.screenings.push(newScreening);
-    return newScreening;
-  }
-
-  public updateScreening(
+  async updateScreening(
     id: number,
-    screening: ScreeningEntity
-  ): ScreeningEntity | null {
-    const idx = this.screenings.findIndex((s) => s.getIdScreening() === id);
-    if (idx === -1) return null;
-    const updated = new ScreeningEntity(
-      id,
-      screening.getDate(),
-      screening.getStart(),
-      screening.getEnd(),
-      screening.getTicketPrice()
-    );
-    this.screenings[idx] = updated;
-    return updated;
+    data: Partial<Screening>
+  ): Promise<Screening | null> {
+    const screening = await Screening.findByPk(id);
+    if (!screening) return null;
+    return await screening.update(data);
   }
 
-  public deleteScreening(id: number): boolean {
-    const initial = this.screenings.length;
-    this.screenings = this.screenings.filter((s) => s.getIdScreening() !== id);
-    return this.screenings.length < initial;
+  async deleteScreening(id: number): Promise<boolean> {
+    const count = await Screening.destroy({ where: { idScreening: id } });
+    return count > 0;
   }
 
-  public getOccupiedSeats(
+  async getOccupiedSeats(
     screeningId: number
-  ): { row: number; column: number }[] {
-    const reservations = ReservationMock.getReservations();
+  ): Promise<{ row: number; column: number }[]> {
+    const reservations = await Reservation.findAll({
+      where: { 
+          screeningId, 
+          status: { [Op.ne]: "Canceled" } 
+      },
+      include: [
+        {
+          model: ReservationSeat,
+          include: [Seat],
+        },
+      ],
+    });
+
     const occupied: { row: number; column: number }[] = [];
-    for (const r of reservations) {
-      const scr = r.getScreening();
-      if (
-        scr &&
-        typeof scr.getIdScreening === "function" &&
-        scr.getIdScreening() === screeningId
-      ) {
-        const seats = r.getSeat();
-        for (const s of seats) {
+    reservations.forEach((r) => {
+      r.reservationSeats?.forEach((rs) => {
+        if (rs.seat) {
           occupied.push({
-            row: (s as any).row ?? 0,
-            column: (s as any).column ?? 0,
+            row: rs.seat.row,
+            column: rs.seat.column,
           });
         }
-      }
-    }
+      });
+    });
     return occupied;
   }
 }
