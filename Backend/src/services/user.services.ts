@@ -1,20 +1,18 @@
-import { User } from "../models/mocks/entities/user.entity";
-import UserMock from "../models/mocks/user.models";
+import { User } from "../models/user.model";
 
 export class UserService {
   constructor() {}
 
-  getUserById(id: number): User | null {
-    return UserMock.getUsers().find((user) => user.getIdUser() === id) || null;
+  async getUserById(id: number): Promise<User | null> {
+    return await User.findByPk(id);
   }
 
-  getUserByEmail(email: string): User | null {
-    return (
-      UserMock.getUsers().find((user) => user.getEmail() === email) || null
-    );
+  async getUserByEmail(email: string): Promise<User | null> {
+    const user = await User.findOne({ where: { email } });
+    return user;
   }
 
-  createUser(user: User): void {
-    UserMock.getUsers().push(user);
+  async createUser(userData: Partial<User>): Promise<User> {
+    return await User.create(userData);
   }
 }
