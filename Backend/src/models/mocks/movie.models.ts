@@ -1,122 +1,68 @@
-import { Movie } from "./entities/movie.entity";
+import { Table, Column, Model, DataType } from "sequelize-typescript";
 
-export class MoviesModel {
-    private data: Movie[];
-    private id: number;
+@Table({
+    tableName: "movies",
+    timestamps: true,
+})
+export class Movie extends Model {
+    @Column({
+        type: DataType.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
+    })
+    declare idMovie: number;
 
-    constructor() {
-        this.data = [
-            new Movie(
-                1,
-                "Inception",
-                148,
-                "Sueños dentro de sueños.",
-                "Ciencia ficción",
-                "Estreno",
-                "Christopher Nolan",
-                "Inglés",
-                true,
-                "https://m.media-amazon.com/images/I/81p+xe8cbnL._AC_SL1500_.jpg"
-            ),
-        ];
-        this.id = 2;
-    }
+    @Column({
+        type: DataType.STRING,
+        allowNull: false,
+    })
+    declare name: string;
 
-    seed(initial: Movie[]) {
-        this.data = initial.map(
-            (m, idx) =>
-                new Movie(
-                    m.idMovie || idx + 1,
-                    m.name,
-                    m.getDuration(),
-                    m.description,
-                    m.genre,
-                    m.categorie,
-                    m.director,
-                    m.lenguage,
-                    m.isSubtitled(),
-                    m.poster
-                )
-        );
-        this.id = this.data.length
-            ? Math.max(...this.data.map((x) => x.idMovie)) + 1
-            : 1;
-    }
+    @Column({
+        type: DataType.INTEGER,
+        allowNull: false,
+    })
+    declare length: number;
 
-    list(): Promise<Movie[]> {
-        return Promise.resolve(this.data);
-    }
+    @Column({
+        type: DataType.TEXT,
+        allowNull: true,
+    })
+    declare description: string;
 
-    getById(id: number): Promise<Movie> {
-        return new Promise((resolve, reject) => {
-            const movie = this.data.find((m) => m.idMovie === id);
-            movie ? resolve(movie) : reject(new Error("Película no encontrada"));
-        });
-    }
+    @Column({
+        type: DataType.STRING,
+        allowNull: false,
+    })
+    declare genre: string;
 
-    create(movie: Movie): Promise<Movie> {
-        return new Promise((resolve, reject) => {
-            const exists = this.data.find(
-                (m) => m.name.toLowerCase() === movie.name.toLowerCase()
-            );
-            if (exists) {
-                reject(new Error("La película ya existe"));
-            } else {
-                const newMovie = new Movie(
-                    this.id++,
-                    movie.name,
-                    movie.getDuration(),
-                    movie.description,
-                    movie.genre,
-                    movie.categorie,
-                    movie.director,
-                    movie.lenguage,
-                    movie.isSubtitled(),
-                    movie.poster
-                );
-                this.data.push(newMovie);
-                resolve(newMovie);
-            }
-        });
-    }
+    @Column({
+        type: DataType.STRING,
+        allowNull: false,
+    })
+    declare categorie: string;
 
-    update(id: number, updatedMovie: Movie): Promise<Movie> {
-        return new Promise((resolve, reject) => {
-            const index = this.data.findIndex((m) => m.idMovie === id);
-            if (index === -1) {
-                reject(new Error("Película no encontrada"));
-            } else {
-                const newMovie = new Movie(
-                    id,
-                    updatedMovie.name,
-                    updatedMovie.getDuration(),
-                    updatedMovie.description,
-                    updatedMovie.genre,
-                    updatedMovie.categorie,
-                    updatedMovie.director,
-                    updatedMovie.lenguage,
-                    updatedMovie.isSubtitled(),
-                    updatedMovie.poster
-                );
-                this.data[index] = newMovie;
-                resolve(newMovie);
-            }
-        });
-    }
+    @Column({
+        type: DataType.STRING,
+        allowNull: false,
+    })
+    declare director: string;
 
-    delete(id: number): Promise<Movie> {
-        return new Promise((resolve, reject) => {
-            const movie = this.data.find((m) => m.idMovie === id);
-            if (!movie) {
-                reject(new Error("Película no encontrada"));
-                return;
-            }
+    @Column({
+        type: DataType.STRING,
+        allowNull: false,
+    })
+    declare lenguage: string;
 
-            this.data = this.data.filter((m) => m.idMovie !== id);
-            resolve(movie);
-        });
-    }
+    @Column({
+        type: DataType.BOOLEAN,
+        defaultValue: false,
+    })
+    declare subtitles: boolean;
+
+    @Column({
+        type: DataType.STRING,
+        allowNull: true,
+    })
+    declare poster: string;
 }
-
-export default new MoviesModel();
-
