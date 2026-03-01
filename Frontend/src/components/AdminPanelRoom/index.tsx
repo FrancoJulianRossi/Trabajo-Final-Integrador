@@ -9,18 +9,15 @@ import {
   Modal,
   InputGroup,
 } from "react-bootstrap";
-
-interface Room {
-  idRoom: number;
-  Name: string;
-  Capacity: number;
-  Location?: string;
-  Layout?: string;
-}
+import { useAuth } from "../../contexts/AuthContext";
+import type { Room } from "./types";
+import { RoomView } from "./RoomView";
+import { RoomForm } from "./RoomForm";
 
 export const AdminPanelRoom: React.FC = () => {
-  const API_BASE = "http://127.0.0.1:3000/api";
+ const API_BASE = import.meta.env.VITE_API_URL || "http://127.0.0.1:3000/api"; 
   const USE_STATIC = Boolean(import.meta.env.VITE_STATIC_MOCKS);
+  const { token } = useAuth();
 
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(false);
@@ -41,17 +38,20 @@ export const AdminPanelRoom: React.FC = () => {
 
   useEffect(() => {
     loadAll();
-  }, []);
+  }, [token]);
 
   async function loadAll() {
     setLoading(true);
     setError(null);
     try {
       if (USE_STATIC) {
-        // no rooms mock currently; fall back to empty list to allow admin actions in-memory
-        setRooms([]);
+        const res = await fetch("/mocks/rooms.json");
+        const json = await res.json();
+        setRooms(Array.isArray(json) ? json : []);
       } else {
-        const res = await fetch(`${API_BASE}/rooms`);
+        const res = await fetch(`${API_BASE}/rooms`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
         if (!res.ok) throw new Error("Error cargando salas");
         const json = await res.json();
         setRooms(Array.isArray(json) ? json : []);
@@ -67,8 +67,8 @@ export const AdminPanelRoom: React.FC = () => {
   const capacityCounts = useMemo(() => {
     const counts = { small: 0, medium: 0, large: 0 };
     rooms.forEach((r) => {
-      if (r.Capacity <= 50) counts.small++;
-      else if (r.Capacity <= 100) counts.medium++;
+      if (r.capacity <= 50) counts.small++;
+      else if (r.capacity <= 100) counts.medium++;
       else counts.large++;
     });
     return counts;
@@ -80,14 +80,13 @@ export const AdminPanelRoom: React.FC = () => {
       const matchSearch =
         !q ||
         String(r.idRoom).includes(q) ||
-        r.Name.toLowerCase().includes(q) ||
-        (r.Location ?? "").toLowerCase().includes(q) ||
-        (r.Layout ?? "").toLowerCase().includes(q);
+        r.name.toLowerCase().includes(q) ||
+        (r.type ?? "").toLowerCase().includes(q);
       const matchCapacity =
         capacityFilter === "all" ||
-        (capacityFilter === "small" && r.Capacity <= 50) ||
-        (capacityFilter === "medium" && r.Capacity > 50 && r.Capacity <= 100) ||
-        (capacityFilter === "large" && r.Capacity > 100);
+        (capacityFilter === "small" && r.capacity <= 50) ||
+        (capacityFilter === "medium" && r.capacity > 50 && r.capacity <= 100) ||
+        (capacityFilter === "large" && r.capacity > 100);
       return matchSearch && matchCapacity;
     });
   }, [rooms, search, capacityFilter]);
@@ -102,7 +101,7 @@ export const AdminPanelRoom: React.FC = () => {
 
   const pageItems = filtered.slice(
     (pageClamped - 1) * pageSize,
-    pageClamped * pageSize
+    pageClamped * pageSize,
   );
 
   // view
@@ -115,21 +114,25 @@ export const AdminPanelRoom: React.FC = () => {
     setEditing({ ...r });
   }
 
-  async function handleSaveEdit() {
+  async function handleSaveEdit(data: Partial<Room>) {
     if (!editing) return;
+    const toSave = { ...editing, ...data };
     setSaving(true);
     setError(null);
     try {
       if (USE_STATIC) {
         setRooms((s) =>
-          s.map((r) => (r.idRoom === editing.idRoom ? editing : r))
+          s.map((r) => (r.idRoom === toSave.idRoom ? toSave : r)),
         );
         setEditing(null);
       } else {
-        const res = await fetch(`${API_BASE}/rooms/${editing.idRoom}`, {
+        const res = await fetch(`${API_BASE}/rooms/${toSave.idRoom}`, {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(editing),
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify(toSave),
         });
         if (!res.ok) {
           const text = await res.text();
@@ -149,31 +152,27 @@ export const AdminPanelRoom: React.FC = () => {
   // create
   function openCreate() {
     setCreatingPayload({
-      Name: "",
-      Capacity: 0,
-      Location: "",
-      Layout: "",
+      name: "",
+      capacity: 0,
+      type: "",
     });
     setCreating(true);
   }
 
-  async function handleCreateSubmit() {
+  async function handleCreateSubmit(data: Partial<Room>) {
     setSaving(true);
     setError(null);
     try {
-      const payload = {
-        Name: creatingPayload.Name,
-        Capacity: creatingPayload.Capacity,
-        Location: creatingPayload.Location,
-        Layout: creatingPayload.Layout,
-      };
       if (USE_STATIC) {
         const created: Room = {
           idRoom: Date.now(),
-          Name: payload.Name || "Sala",
-          Capacity: payload.Capacity || 0,
-          Location: payload.Location,
-          Layout: payload.Layout,
+          name: data.name || "Sala",
+          capacity: data.capacity || 0,
+          type: data.type || "General",
+          rows: data.rows || 0,
+          cols: data.cols || 0,
+          isActive: true,
+          seats: data.seats || [],
         };
         setRooms((s) => [created, ...s]);
         setCreating(false);
@@ -181,8 +180,11 @@ export const AdminPanelRoom: React.FC = () => {
       } else {
         const res = await fetch(`${API_BASE}/rooms`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify(data),
         });
         if (!res.ok) {
           const text = await res.text();
@@ -202,7 +204,7 @@ export const AdminPanelRoom: React.FC = () => {
 
   // delete
   async function handleDelete(r: Room) {
-    if (!confirm(`Confirmar eliminación de la sala #${r.idRoom} (${r.Name})?`))
+    if (!confirm(`Confirmar eliminación de la sala #${r.idRoom} (${r.name})?`))
       return;
     try {
       if (USE_STATIC) {
@@ -211,6 +213,7 @@ export const AdminPanelRoom: React.FC = () => {
       }
       const res = await fetch(`${API_BASE}/rooms/${r.idRoom}`, {
         method: "DELETE",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       if (!res.ok) {
         const text = await res.text();
@@ -228,13 +231,7 @@ export const AdminPanelRoom: React.FC = () => {
   function exportCsv() {
     const rows = [
       ["idRoom", "Name", "Capacity", "Location", "Layout"],
-      ...filtered.map((r) => [
-        r.idRoom,
-        r.Name,
-        r.Capacity,
-        r.Location ?? "",
-        r.Layout ?? "",
-      ]),
+      ...filtered.map((r) => [r.idRoom, r.name, r.capacity, r.type]),
     ];
     const csv = rows
       .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))
@@ -360,8 +357,7 @@ export const AdminPanelRoom: React.FC = () => {
                 <th>#</th>
                 <th>Nombre</th>
                 <th>Capacidad</th>
-                <th>Ubicación</th>
-                <th>Layout</th>
+                <th>Tipo</th>
                 <th className="text-end">Acciones</th>
               </tr>
             </thead>
@@ -369,10 +365,9 @@ export const AdminPanelRoom: React.FC = () => {
               {pageItems.map((r) => (
                 <tr key={r.idRoom}>
                   <td>{r.idRoom}</td>
-                  <td>{r.Name}</td>
-                  <td>{r.Capacity}</td>
-                  <td>{r.Location ?? "-"}</td>
-                  <td>{r.Layout ?? "-"}</td>
+                  <td>{r.name}</td>
+                  <td>{r.capacity}</td>
+                  <td>{r.type}</td>
                   <td className="text-end">
                     <Button
                       size="sm"
@@ -465,33 +460,9 @@ export const AdminPanelRoom: React.FC = () => {
         <Modal.Header closeButton>
           <Modal.Title>Detalle de sala</Modal.Title>
         </Modal.Header>
-        <Modal.Body>
-          {viewing && (
-            <>
-              <Row>
-                <Col md={8}>
-                  <h5>
-                    Sala #{viewing.idRoom} - {viewing.Name}
-                  </h5>
-                  <p>
-                    <strong>Capacidad:</strong> {viewing.Capacity}
-                  </p>
-                  <p>
-                    <strong>Ubicación:</strong> {viewing.Location ?? "-"}
-                  </p>
-                  <p>
-                    <strong>Layout:</strong> {viewing.Layout ?? "-"}
-                  </p>
-                </Col>
-              </Row>
-            </>
-          )}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setViewing(null)}>
-            Cerrar
-          </Button>
-        </Modal.Footer>
+        {viewing && (
+          <RoomView room={viewing} onClose={() => setViewing(null)} />
+        )}
       </Modal>
 
       {/* Edit modal */}
@@ -503,59 +474,14 @@ export const AdminPanelRoom: React.FC = () => {
         </Modal.Header>
         <Modal.Body>
           {editing && (
-            <Form>
-              <Form.Group className="mb-2">
-                <Form.Label>Nombre</Form.Label>
-                <Form.Control
-                  value={editing.Name ?? ""}
-                  onChange={(e) =>
-                    setEditing({ ...editing, Name: e.target.value })
-                  }
-                />
-              </Form.Group>
-              <Form.Group className="mb-2">
-                <Form.Label>Capacidad</Form.Label>
-                <Form.Control
-                  type="number"
-                  value={editing.Capacity ?? 0}
-                  onChange={(e) =>
-                    setEditing({ ...editing, Capacity: Number(e.target.value) })
-                  }
-                />
-              </Form.Group>
-              <Form.Group className="mb-2">
-                <Form.Label>Ubicación</Form.Label>
-                <Form.Control
-                  value={editing.Location ?? ""}
-                  onChange={(e) =>
-                    setEditing({ ...editing, Location: e.target.value })
-                  }
-                />
-              </Form.Group>
-              <Form.Group className="mb-2">
-                <Form.Label>Layout</Form.Label>
-                <Form.Control
-                  value={editing.Layout ?? ""}
-                  onChange={(e) =>
-                    setEditing({ ...editing, Layout: e.target.value })
-                  }
-                />
-              </Form.Group>
-            </Form>
+            <RoomForm
+              initialData={editing}
+              onSave={handleSaveEdit}
+              onCancel={() => setEditing(null)}
+              saving={saving}
+            />
           )}
         </Modal.Body>
-        <Modal.Footer>
-          <Button
-            variant="secondary"
-            onClick={() => setEditing(null)}
-            disabled={saving}
-          >
-            Cancelar
-          </Button>
-          <Button variant="primary" onClick={handleSaveEdit} disabled={saving}>
-            Guardar
-          </Button>
-        </Modal.Footer>
       </Modal>
 
       {/* Create modal */}
@@ -564,74 +490,13 @@ export const AdminPanelRoom: React.FC = () => {
           <Modal.Title>Crear nueva sala</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Form>
-            <Form.Group className="mb-2">
-              <Form.Label>Nombre</Form.Label>
-              <Form.Control
-                value={creatingPayload.Name ?? ""}
-                onChange={(e) =>
-                  setCreatingPayload({
-                    ...creatingPayload,
-                    Name: e.target.value,
-                  })
-                }
-              />
-            </Form.Group>
-            <Form.Group className="mb-2">
-              <Form.Label>Capacidad</Form.Label>
-              <Form.Control
-                type="number"
-                value={creatingPayload.Capacity ?? 0}
-                onChange={(e) =>
-                  setCreatingPayload({
-                    ...creatingPayload,
-                    Capacity: Number(e.target.value),
-                  })
-                }
-              />
-            </Form.Group>
-            <Form.Group className="mb-2">
-              <Form.Label>Ubicación</Form.Label>
-              <Form.Control
-                value={creatingPayload.Location ?? ""}
-                onChange={(e) =>
-                  setCreatingPayload({
-                    ...creatingPayload,
-                    Location: e.target.value,
-                  })
-                }
-              />
-            </Form.Group>
-            <Form.Group className="mb-2">
-              <Form.Label>Layout</Form.Label>
-              <Form.Control
-                value={creatingPayload.Layout ?? ""}
-                onChange={(e) =>
-                  setCreatingPayload({
-                    ...creatingPayload,
-                    Layout: e.target.value,
-                  })
-                }
-              />
-            </Form.Group>
-          </Form>
+          <RoomForm
+            initialData={creatingPayload}
+            onSave={handleCreateSubmit}
+            onCancel={() => setCreating(false)}
+            saving={saving}
+          />
         </Modal.Body>
-        <Modal.Footer>
-          <Button
-            variant="secondary"
-            onClick={() => setCreating(false)}
-            disabled={saving}
-          >
-            Cancelar
-          </Button>
-          <Button
-            variant="primary"
-            onClick={handleCreateSubmit}
-            disabled={saving}
-          >
-            Crear
-          </Button>
-        </Modal.Footer>
       </Modal>
     </Container>
   );
