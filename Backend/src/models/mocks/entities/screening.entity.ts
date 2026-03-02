@@ -1,35 +1,47 @@
-import { ScreeningEntity } from "./entities/screening.entity";
+export class ScreeningEntity {
+    protected idScreening: number;
+    protected date: Date;
+    protected start: Date;
+    protected end: Date;
+    protected ticketPrice: number;
 
-export const screeningMock = new ScreeningEntity(
-  1,
-  new Date("2023-12-01"),
-  new Date("2023-12-01T18:00:00"),
-  new Date("2023-12-01T20:00:00"),
-  350.0
-);
+    constructor(
+        idScreening: number,
+        date: Date | string,
+        start: Date | string,
+        end: Date | string,
+        ticketPrice: number
+    ) {
+        this.idScreening = idScreening;
+        this.date = new Date(date);
+        this.start = new Date(start);
+        this.end = new Date(end);
+        this.ticketPrice = ticketPrice;
+    }
 
-export const screeningMockUpdated = new ScreeningEntity(
-  2,
-  new Date("2023-12-02"),
-  new Date("2023-12-02T18:00:00"),
-  new Date("2023-12-02T20:00:00"),
-  350.0
-);
+    getIdScreening(): number {
+        return this.idScreening;
+    }
+    getDate(): Date {
+        return this.date;
+    }
+    getStart(): Date {
+        return this.start;
+    }
+    getEnd(): Date {
+        return this.end;
+    }
+    getTicketPrice(): number {
+        return this.ticketPrice;
+    }
 
-export let screenings: ScreeningEntity[] = [
-  screeningMock,
-  screeningMockUpdated,
-];
+    getDurationMinutes(): number {
+        const s = new Date(this.start).getTime();
+        const e = new Date(this.end).getTime();
+        return Math.max(0, Math.floor((e - s) / 60000));
+    }
 
-export function seedScreenings(initial: ScreeningEntity[]) {
-  screenings = initial.map(
-    (s, idx) =>
-      new ScreeningEntity(
-        s.getIdScreening ? s.getIdScreening() : s["idScreening"] || idx + 1,
-        s.getDate(),
-        s.getStart(),
-        s.getEnd(),
-        s.getTicketPrice()
-      )
-  );
+    isAvailable(): boolean {
+        return Date.now() < new Date(this.start).getTime();
+    }
 }
