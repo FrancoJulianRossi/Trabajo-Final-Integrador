@@ -8,20 +8,16 @@ import {
   Table,
   Modal,
 } from "react-bootstrap";
+import { useAuth } from "../../contexts/AuthContext";
 import UserView from "./UserView";
 import UserForm from "./UserForm";
 
-interface User {
-  id: number;
-  name: string;
-  email: string;
-  role?: string;
-  createdAt?: string;
-}
+import type { User } from "./types";
 
-const API_BASE = "http://127.0.0.1:3000/api";
+const API_BASE = import.meta.env.VITE_API_URL || "http://127.0.0.1:3000/api";
 
 const UserList: React.FC = () => {
+  const { token } = useAuth();
   const [items, setItems] = useState<User[]>([]);
   const [query, setQuery] = useState("");
   const [filterRole, setFilterRole] = useState("");
@@ -33,19 +29,27 @@ const UserList: React.FC = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const res = await fetch(`${API_BASE}/users`);
-        if (res.ok) {
+        if (import.meta.env.VITE_STATIC_MOCKS) {
+          const res = await fetch(`/mocks/users.json`);
           const data = await res.json();
           setItems(Array.isArray(data) ? data : []);
         } else {
-          setItems([]);
+          const res = await fetch(`${API_BASE}/users`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          });
+          if (res.ok) {
+            const data = await res.json();
+            setItems(Array.isArray(data) ? data : []);
+          } else {
+            setItems([]);
+          }
         }
       } catch (err) {
         setItems([]);
       }
     };
     fetchUsers();
-  }, []);
+  }, [token]);
 
   const filtered = useMemo(() => {
     let out = items;
@@ -55,13 +59,13 @@ const UserList: React.FC = () => {
         (u) =>
           u.name.toLowerCase().includes(q) ||
           u.email.toLowerCase().includes(q) ||
-          String(u.id).includes(q)
+          String(u.idUser).includes(q),
       );
     }
-    if (filterRole)
-      out = out.filter(
-        (u) => (u.role || "").toLowerCase() === filterRole.toLowerCase()
-      );
+    if (filterRole !== "") {
+      const isFilterRoleAdmin = filterRole === "true";
+      out = out.filter((u) => u.role === isFilterRoleAdmin);
+    }
     return out;
   }, [items, query, filterRole]);
 
@@ -71,33 +75,93 @@ const UserList: React.FC = () => {
   }, [totalPages]);
   const pageItems = filtered.slice(
     (page - 1) * itemsPerPage,
-    page * itemsPerPage
+    page * itemsPerPage,
   );
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (idUser: number) => {
+    if (!confirm(`Confirmar eliminación del usuario #${idUser}?`)) return;
     try {
-      const res = await fetch(`${API_BASE}/users/${id}`, { method: "DELETE" });
-      if (res.ok) setItems((s) => s.filter((u) => u.id !== id));
-      else setItems((s) => s.filter((u) => u.id !== id));
-    } catch (err) {
-      setItems((s) => s.filter((u) => u.id !== id));
+      if (import.meta.env.VITE_STATIC_MOCKS) {
+        setItems((s) => s.filter((u) => u.idUser !== idUser));
+        return;
+      }
+      const res = await fetch(`${API_BASE}/users/${idUser}`, {
+        method: "DELETE",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (res.ok) {
+        setItems((s) => s.filter((u) => u.idUser !== idUser));
+      } else {
+        const errorText = await res.text();
+        alert(`Error al eliminar usuario: ${errorText || res.statusText}`);
+      }
+    } catch (err: any) {
+      console.error("Delete error:", err);
+      alert(`Error al eliminar usuario: ${err.message || "Error desconocido"}`);
     }
   };
 
-  const handleSave = (u: User) => {
-    const exists = items.find((i) => i.id === u.id);
-    if (exists) setItems((s) => s.map((i) => (i.id === u.id ? u : i)));
-    else setItems((s) => [u, ...s]);
-    setEditing(null);
+  const handleSave = async (userToSave: User) => {
+    try {
+      // Determine if it's a new user by checking if idUser exists and is not a temporary client-generated ID
+      const isNewUser =
+        !userToSave.idUser ||
+        !items.some((u) => u.idUser === userToSave.idUser);
+      let res;
+      if (isNewUser) {
+        // Create new user (POST)
+        const payload: Partial<User> = { ...userToSave };
+        delete payload.idUser; // Backend assigns idUser
+        delete payload.createdAt; // Backend handles createdAt
+
+        res = await fetch(`${API_BASE}/users`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify(payload),
+        });
+      } else {
+        // Update existing user (PUT)
+        res = await fetch(`${API_BASE}/users/${userToSave.idUser}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify(userToSave),
+        });
+      }
+
+      if (res.ok) {
+        const savedUser = await res.json();
+        if (isNewUser) {
+          setItems((s) => [savedUser, ...s]);
+        } else {
+          setItems((s) =>
+            s.map((u) => (u.idUser === savedUser.idUser ? savedUser : u)),
+          );
+        }
+        setEditing(null); // Close modal on success
+      } else {
+        const errorBody = await res.json(); // Read error body as JSON
+        const errorMessage = errorBody.message || res.statusText;
+        alert(`Error al guardar usuario: ${errorMessage}`);
+      }
+    } catch (err: any) {
+      console.error("Save error:", err);
+      alert(`Error al guardar usuario: ${err.message || "Error desconocido"}`);
+    }
   };
 
   const exportCSV = (list: User[]) => {
-    const header = ["id", "name", "email", "role", "createdAt"];
+    const header = ["idUser", "name", "email", "role", "createdAt"];
     const rows = list.map((u) => [
-      u.id,
+      u.idUser,
       u.name,
       u.email,
-      u.role || "",
+      u.role ? "Admin" : "Client",
       u.createdAt || "",
     ]);
     const csv = [header, ...rows]
@@ -127,14 +191,17 @@ const UserList: React.FC = () => {
           />
         </Col>
         <Col md={3}>
-          <Form.Control
-            placeholder="Filtrar por rol"
+          <Form.Select
             value={filterRole}
             onChange={(e) => {
               setFilterRole(e.target.value);
               setPage(1);
             }}
-          />
+          >
+            <option value="">Todos</option>
+            <option value="true">Admin</option>
+            <option value="false">Cliente</option>
+          </Form.Select>
         </Col>
         <Col md={2}>
           <Form.Select
@@ -151,20 +218,6 @@ const UserList: React.FC = () => {
         </Col>
         <Col md={3} className="text-end">
           <Button onClick={() => exportCSV(filtered)}>Exportar CSV</Button>
-          <Button
-            className="ms-2"
-            onClick={() =>
-              setEditing({
-                id: Date.now(),
-                name: "",
-                email: "",
-                role: "",
-                createdAt: new Date().toISOString(),
-              })
-            }
-          >
-            Nuevo
-          </Button>
         </Col>
       </Row>
 
@@ -180,11 +233,11 @@ const UserList: React.FC = () => {
         </thead>
         <tbody>
           {pageItems.map((u) => (
-            <tr key={u.id}>
-              <td>{u.id}</td>
+            <tr key={u.idUser}>
+              <td>{u.idUser}</td>
               <td>{u.name}</td>
               <td>{u.email}</td>
-              <td>{u.role}</td>
+              <td>{u.role ? "Admin" : "Client"}</td>
               <td>
                 <Button size="sm" onClick={() => setSelected(u)}>
                   Ver
@@ -201,7 +254,7 @@ const UserList: React.FC = () => {
                   size="sm"
                   variant="danger"
                   className="ms-1"
-                  onClick={() => handleDelete(u.id)}
+                  onClick={() => handleDelete(u.idUser)}
                 >
                   Eliminar
                 </Button>
@@ -252,7 +305,7 @@ const UserList: React.FC = () => {
       <Modal show={!!editing} onHide={() => setEditing(null)} size="lg">
         <Modal.Header closeButton>
           <Modal.Title>
-            {editing?.id ? "Editar Usuario" : "Nuevo Usuario"}
+            {editing?.idUser ? "Editar Usuario" : "Nuevo Usuario"}
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
