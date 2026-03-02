@@ -1,0 +1,105 @@
+.heroCarouselContainer {
+  width: 100%;
+  height: 60vh;
+  position: relative;
+  overflow: hidden;
+  background-color: #050505;
+}
+
+@media (min-width: 768px) {
+  .heroCarouselContainer {
+    height: 100vh;
+  }
+}
+
+.mySwiper {
+  width: 100%;
+  height: 100%;
+}
+
+.swiperSlide {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+.slideBackground {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  z-index: 0;
+}
+
+.gradientOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  /* Gradiente más complejo: oscurece los bordes y la parte inferior */
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.4) 0%,
+      rgba(0, 0, 0, 0.1) 40%,
+      rgba(0, 0, 0, 0.9) 100%
+    ),
+    radial-gradient(circle at center, transparent 50%, rgba(0, 0, 0, 0.5) 100%);
+  z-index: 1;
+}
+
+.content {
+  position: relative;
+  z-index: 2;
+  color: white;
+  padding: 20px;
+  max-width: 900px;
+  text-align: center;
+  text-shadow: 0px 4px 12px rgba(0, 0, 0, 0.8);
+}
+
+.emptyCarousel {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.5rem;
+  color: #6c757d;
+  background-color: #141414; /* Tono oscuro tipo cine */
+}
+
+/* Custom Swiper Pagination */
+:global(.swiper-pagination-bullet) {
+  background: rgba(255, 255, 255, 0.4) !important;
+  opacity: 1 !important;
+  transition: all 0.3s ease;
+}
+
+:global(.swiper-pagination-bullet-active) {
+  background: #fff !important;
+  width: 30px !important;
+  border-radius: 10px !important;
+}
+
+/* Custom Swiper Navigation */
+:global(.swiper-button-next),
+:global(.swiper-button-prev) {
+  color: rgba(255, 255, 255, 0.6) !important;
+  transition:
+    color 0.3s ease,
+    transform 0.3s ease;
+}
+
+:global(.swiper-button-next:hover),
+:global(.swiper-button-prev:hover) {
+  color: #fff !important;
+  transform: scale(1.1);
+}
