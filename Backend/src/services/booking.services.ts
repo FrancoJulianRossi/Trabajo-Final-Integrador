@@ -1,14 +1,21 @@
+<<<<<<< CRM-16-controller-reservation
 import { User } from "../models/user.model";
+=======
+>>>>>>> dev
 import { Reservation } from "../models/reservation.model";
 import { ReservationSeat } from "../models/reservation-seat.model";
 import { Screening } from "../models/screening.model";
 import { Seat } from "../models/seat.model";
+<<<<<<< CRM-16-controller-reservation
 import { Movie } from "../models/movie.model";
 import { Room } from "../models/room.model";
+=======
+>>>>>>> dev
 import { sequelize } from "../config/database";
 import { Op } from "sequelize";
 
 export class BookingService {
+<<<<<<< CRM-16-controller-reservation
   async listAllReservations(): Promise<Reservation[]> {
     return await Reservation.findAll({
       include: [
@@ -54,11 +61,17 @@ export class BookingService {
           include: [Seat],
         },
       ],
+=======
+  async listReservations(): Promise<Reservation[]> {
+    return await Reservation.findAll({
+      include: ["screening", "reservationSeats"],
+>>>>>>> dev
     });
   }
 
   async getReservationById(id: number): Promise<Reservation | null> {
     return await Reservation.findByPk(id, {
+<<<<<<< CRM-16-controller-reservation
       include: [
         {
           model: Screening,
@@ -76,6 +89,9 @@ export class BookingService {
           include: [Seat],
         },
       ],
+=======
+      include: ["screening", "reservationSeats"],
+>>>>>>> dev
     });
   }
 
@@ -102,6 +118,7 @@ export class BookingService {
           throw new Error(`Seat at row ${s.row} col ${s.column} not found`);
         seatInstances.push(seat);
       }
+<<<<<<< CRM-16-controller-reservation
 
       // Check if any of these seats are already reserved for this screening.
       // We lock the matching rows to prevent concurrent inserts on the same seats.
@@ -155,11 +172,55 @@ export class BookingService {
         throw err;
       }
 
+=======
+
+      // Check if any of these seats are already reserved for this screening
+      const occupied = await ReservationSeat.findAll({
+        where: { seatId: seatInstances.map((s) => s.idSeat) },
+        include: [
+          {
+            model: Reservation,
+            where: {
+              screeningId: screeningId,
+              status: { [Op.or]: ["Pending", "Confirmed", "Paid"] },
+            },
+          },
+        ],
+        transaction: t,
+      });
+
+      if (occupied.length > 0)
+        throw new Error("Some seats are already occupied");
+
+      const total = seatInstances.length * screening.ticketPrice;
+
+      const reservation = await Reservation.create(
+        {
+          screeningId,
+          userId,
+          reservationDate: new Date(),
+          status: "Confirmed",
+          total,
+        },
+        { transaction: t },
+      );
+
+      const reservationSeatsData = seatInstances.map((s) => ({
+        reservationId: reservation.idReservation,
+        seatId: s.idSeat,
+      }));
+
+      await ReservationSeat.bulkCreate(reservationSeatsData, {
+        transaction: t,
+      });
+
+>>>>>>> dev
       await t.commit();
 
       // Reload to include relations if needed, or return plain
       return reservation;
     } catch (error) {
+<<<<<<< CRM-16-controller-reservation
       // rollback may already have happened; ignore failure
       try {
         await t.rollback();
@@ -279,6 +340,10 @@ export class BookingService {
         // ignore if already finished
       }
       throw err;
+=======
+      await t.rollback();
+      throw error;
+>>>>>>> dev
     }
   }
 
@@ -287,6 +352,7 @@ export class BookingService {
     if (!reservation) throw new Error("Reservation not found");
     reservation.status = "Canceled";
     await reservation.save();
+<<<<<<< CRM-16-controller-reservation
   }
 
   async deleteReservation(id: number): Promise<void> {
@@ -313,6 +379,8 @@ export class BookingService {
       await t.rollback();
       throw error;
     }
+=======
+>>>>>>> dev
   }
 }
 
