@@ -1,27 +1,7 @@
 import React from "react";
 import { Button } from "react-bootstrap";
 
-interface Seat {
-  id: number;
-  row: number;
-  column: number;
-}
-
-interface Screening {
-  idScreening: number;
-  date: string;
-  start: string;
-  end: string;
-  ticketPrice: number;
-}
-
-interface Reservation {
-  id: number;
-  screening: Screening;
-  seats: Seat[];
-  customerName?: string;
-  createdAt?: string;
-}
+import type { Reservation } from "./types";
 
 const BookingView: React.FC<{
   reservation: Reservation;
@@ -29,9 +9,9 @@ const BookingView: React.FC<{
 }> = ({ reservation, onClose }) => {
   return (
     <div>
-      <h5>Reserva #{reservation.id}</h5>
+      <h5>Reserva #{reservation.idReservation}</h5>
       <p>
-        <strong>Cliente:</strong> {reservation.customerName}
+        <strong>Usuario:</strong> {reservation.user?.name || "Sin usuario"}
       </p>
       <p>
         <strong>Fecha:</strong> {reservation.screening?.date}
@@ -41,10 +21,20 @@ const BookingView: React.FC<{
       </p>
       <p>
         <strong>Asientos:</strong>{" "}
-        {reservation.seats.map((s) => `${s.row}-${s.column}`).join(", ")}
+        {(reservation.reservationSeats || [])
+          .map((rs) => `${rs.seat.row}-${rs.seat.column}`)
+          .join(", ")}
       </p>
       <p>
-        <small>Creada: {reservation.createdAt}</small>
+        <strong>Estado:</strong> {reservation.status}
+      </p>
+      <p>
+        <strong>Total:</strong> ${reservation.total}
+      </p>
+      <p>
+        <small>
+          Creada: {new Date(reservation.reservationDate).toLocaleString()}
+        </small>
       </p>
       <div className="text-end">
         <Button variant="secondary" onClick={onClose}>
