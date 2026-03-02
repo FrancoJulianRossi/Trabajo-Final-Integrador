@@ -111,6 +111,12 @@ export class RoomController {
         return res.status(404).json({ message: "Room not found" });
       }
     } catch (error: any) {
+      if (
+        error.message &&
+        error.message.toLowerCase().includes("screenings")
+      ) {
+        return res.status(409).json({ message: error.message });
+      }
       return res.status(500).json({ message: error.message });
     }
   }

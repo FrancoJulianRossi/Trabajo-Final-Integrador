@@ -10,7 +10,7 @@ const room_model_1 = require("../models/room.model");
 const seat_model_1 = require("../models/seat.model");
 const movie_model_1 = require("../models/movie.model");
 const screening_model_1 = require("../models/screening.model");
-describe('BookingService transactional booking', () => {
+describe("BookingService transactional booking", () => {
     let user;
     let room;
     let seat;
@@ -24,14 +24,14 @@ describe('BookingService transactional booking', () => {
         // clear existing data by forcing sync; maintains schema including indexes
         await database_1.sequelize.sync({ force: true });
         user = await user_model_1.User.create({
-            name: 'test',
-            email: 'user@example.com',
-            password: 'secret',
+            name: "test",
+            email: "user@example.com",
+            password: "secret",
         });
         room = await room_model_1.Room.create({
-            name: 'Room1',
+            name: "Room1",
             capacity: 10,
-            type: 'Standard',
+            type: "Standard",
             rows: 2,
             cols: 5,
             isActive: true,
@@ -40,16 +40,16 @@ describe('BookingService transactional booking', () => {
             roomId: room.idRoom,
             row: 1,
             column: 1,
-            type: 'Standard',
+            type: "Standard",
         });
         movie = await movie_model_1.Movie.create({
-            name: 'Some Movie',
+            name: "Some Movie",
             length: 90,
-            description: 'desc',
-            genre: 'Action',
-            categorie: 'A',
-            director: 'D',
-            lenguage: 'EN',
+            description: "desc",
+            genre: "Action",
+            categorie: "A",
+            director: "D",
+            lenguage: "EN",
             subtitles: false,
         });
         screening = await screening_model_1.Screening.create({
@@ -61,17 +61,19 @@ describe('BookingService transactional booking', () => {
             ticketPrice: 5,
         });
     });
-    it('should create a reservation and reject a second for same seat', async () => {
+    it("should create a reservation and reject a second for same seat", async () => {
         const first = await booking_services_1.default.createReservation(screening.idScreening, user.idUser, [{ row: 1, column: 1 }]);
         expect(first).toBeDefined();
-        await expect(booking_services_1.default.createReservation(screening.idScreening, user.idUser, [{ row: 1, column: 1 }])).rejects.toThrow(/occupied/);
+        await expect(booking_services_1.default.createReservation(screening.idScreening, user.idUser, [
+            { row: 1, column: 1 },
+        ])).rejects.toThrow(/occupied/);
     });
-    it('should only allow one of two concurrent attempts', async () => {
+    it("should only allow one of two concurrent attempts", async () => {
         const p1 = booking_services_1.default.createReservation(screening.idScreening, user.idUser, [{ row: 1, column: 1 }]);
         const p2 = booking_services_1.default.createReservation(screening.idScreening, user.idUser, [{ row: 1, column: 1 }]);
         const results = await Promise.allSettled([p1, p2]);
-        const successes = results.filter((r) => r.status === 'fulfilled');
-        const failures = results.filter((r) => r.status === 'rejected');
+        const successes = results.filter((r) => r.status === "fulfilled");
+        const failures = results.filter((r) => r.status === "rejected");
         expect(successes.length).toBe(1);
         expect(failures.length).toBe(1);
         const reason = failures[0].reason;

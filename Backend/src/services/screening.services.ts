@@ -45,6 +45,36 @@ export class ScreeningService {
    * Calculates the end time of a screening based on movie length and start time.
    * Mutates the provided `data` object to include `end` if possible.
    */
+  /**
+   * Combines a date string (YYYY-MM-DD) with a time string (HH:mm or full iso)
+   * into a single Date object. If the `time` already contains a full date-time,
+   * it is returned as-is. Returns `null` when the inputs are not parseable.
+   */
+  private combineDateTime(
+    date: string | Date | undefined,
+    time: string | Date | undefined,
+  ): Date | null {
+    if (!time) return null;
+    if (time instanceof Date) {
+      return time;
+    }
+    // if the time string seems to include a date portion already, parse directly
+    if (time.includes("T")) {
+      const d = new Date(time);
+      return isNaN(d.getTime()) ? null : d;
+    }
+
+    if (!date) {
+      // fall back to parsing the time alone (will use today)
+      const d = new Date(time);
+      return isNaN(d.getTime()) ? null : d;
+    }
+
+    const dateStr = date instanceof Date ? date.toISOString().slice(0, 10) : date;
+    const combined = new Date(`${dateStr}T${time}`);
+    return isNaN(combined.getTime()) ? null : combined;
+  }
+
   private async computeEndTime(data: Partial<Screening>) {
     // only compute if movieId and start are present and either end is missing or we
     // think it should be recalculated (start/movie changed)
@@ -53,11 +83,11 @@ export class ScreeningService {
     const movie = await Movie.findByPk(data.movieId);
     if (!movie || typeof movie.length !== "number") return;
 
-    const startDate = new Date(data.start as string | Date);
-    if (isNaN(startDate.getTime())) return;
+    const startDate = this.combineDateTime(data.date, data.start);
+    if (!startDate) return;
 
     const endDate = new Date(startDate.getTime() + movie.length * 60 * 1000);
-    data.end = endDate;
+    data.end = endDate; // keep as Date for consistency with model
   }
 
   private async validateTiming(
@@ -67,11 +97,11 @@ export class ScreeningService {
     // we need start, end, roomId and date to perform meaningful checks
     if (!data.start || !data.end || !data.roomId || !data.date) return;
 
-    const startDate = new Date(data.start as string | Date);
-    const endDate = new Date(data.end as string | Date);
-    const now = new Date();
+    const startDate = this.combineDateTime(data.date, data.start);
+    const endDate = this.combineDateTime(data.date, data.end);
+    if (!startDate || !endDate) return;
 
-    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) return;
+    const now = new Date();
 
     // cannot schedule in the past
     if (startDate.getTime() < now.getTime()) {
@@ -100,6 +130,11 @@ export class ScreeningService {
   }
 
   async createScreening(data: Partial<Screening>): Promise<Screening> {
+    // price cannot be negative
+    if (data.ticketPrice !== undefined && data.ticketPrice < 0) {
+      throw new ScreeningValidationError("Ticket price must not be negative");
+    }
+
     await this.computeEndTime(data);
     await this.validateTiming(data);
     return await Screening.create(data);
@@ -123,6 +158,11 @@ export class ScreeningService {
       if (merged.end) {
         data.end = merged.end;
       }
+    }
+
+    // price cannot be negative
+    if (data.ticketPrice !== undefined && data.ticketPrice < 0) {
+      throw new ScreeningValidationError("Ticket price must not be negative");
     }
 
     // build final object for validation using existing values when not provided

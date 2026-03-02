@@ -64,5 +64,19 @@ describe('MovieService', () => {
         jest.spyOn(movie_model_1.Movie, 'findByPk').mockResolvedValue(null);
         await expect(movie_services_1.default.delete(10)).rejects.toThrow('Movie not found');
     });
+    it('create should reject negative or zero length', async () => {
+        const payload = { name: 'Bad Movie', length: -10 };
+        await expect(movie_services_1.default.create(payload)).rejects.toThrow(/positive/i);
+        const payload2 = { name: 'Also bad', length: 0 };
+        await expect(movie_services_1.default.create(payload2)).rejects.toThrow(/positive/i);
+    });
+    it('update should reject negative or zero length', async () => {
+        const movieInstance = {
+            update: jest.fn().mockResolvedValue(undefined),
+        };
+        jest.spyOn(movie_model_1.Movie, 'findByPk').mockResolvedValue(movieInstance);
+        await expect(movie_services_1.default.update(1, { length: -5 })).rejects.toThrow(/positive/i);
+        await expect(movie_services_1.default.update(1, { length: 0 })).rejects.toThrow(/positive/i);
+    });
 });
 //# sourceMappingURL=movie.services.test.js.map

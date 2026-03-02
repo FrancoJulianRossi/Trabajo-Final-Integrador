@@ -90,6 +90,44 @@ describe("ScreeningService", () => {
     );
   });
 
+  it("createScreening rejects negative ticketPrice", async () => {
+    const payload: Partial<Screening> = {
+      movieId: 2,
+      roomId: 1,
+      date: new Date("2024-06-01"),
+      start: new Date("2024-06-01T10:00:00Z"),
+      ticketPrice: -50,
+    };
+    jest.spyOn(Movie, "findByPk").mockResolvedValue({ length: 100 } as any);
+    await expect(screeningService.createScreening(payload)).rejects.toThrow(
+      /price/i,
+    );
+  });
+
+  it("validation combines date and time correctly when strings are provided", async () => {
+    // supply date as date-only string and start as time-only string
+    const payload: Partial<Screening> = {
+      movieId: 2,
+      roomId: 1,
+      // provide valid Date instances to satisfy typings
+      date: new Date("2024-06-10"),
+      start: new Date("2024-06-10T09:00:00"),
+      ticketPrice: 100,
+    } as any; // cast due to partial mismatch
+    // movie length -> 60
+    jest.spyOn(Movie, "findByPk").mockResolvedValue({ length: 60 } as any);
+    const expectedEnd = new Date("2024-06-10T10:00:00");
+
+    jest.spyOn(Screening, "create").mockImplementation(async (data: any) => {
+      // ensure that end got calculated with correct date
+      expect(new Date(data.end)).toEqual(expectedEnd);
+      return { idScreening: 123, ...data } as any;
+    });
+
+    const result = await screeningService.createScreening(payload);
+    expect(result).toHaveProperty("idScreening", 123);
+  });
+
   it("createScreening rejects when there is an overlapping screening", async () => {
     const start = new Date("2024-06-01T10:00:00Z");
     const end = new Date("2024-06-01T12:00:00Z");
@@ -161,6 +199,20 @@ describe("ScreeningService", () => {
     await expect(screeningService.updateScreening(11, payload)).rejects.toThrow(
       /past/i,
     );
+  });
+
+  it("updateScreening rejects negative ticketPrice", async () => {
+    const existing: any = {
+      update: jest.fn().mockResolvedValue({ idScreening: 22 }),
+      idScreening: 22,
+      movieId: 2,
+      start: new Date("2024-05-05T08:00:00Z"),
+      roomId: 3,
+      date: new Date("2024-05-05"),
+      end: new Date("2024-05-05T10:00:00Z"),
+    };
+    jest.spyOn(Screening, "findByPk").mockResolvedValue(existing);
+    await expect(screeningService.updateScreening(22, { ticketPrice: -1 })).rejects.toThrow(/price/i);
   });
 
   it("updateScreening rejects when updated timing overlaps another screening", async () => {

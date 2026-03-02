@@ -4,7 +4,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const movie_services_1 = __importDefault(require("../services/movie.services"));
-const movie_entity_1 = require("../models/mocks/entities/movie.entity");
 class MoviesController {
     async list(req, res) {
         try {
@@ -31,8 +30,17 @@ class MoviesController {
     async create(req, res) {
         try {
             const { name, length, description, genre, categorie, director, lenguage, subtitles, poster, } = req.body;
-            const newMovie = new movie_entity_1.Movie(0, name, length, description, genre, categorie, director, lenguage, subtitles, poster);
-            const created = await movie_services_1.default.create(newMovie);
+            const created = await movie_services_1.default.create({
+                name,
+                length,
+                description,
+                genre,
+                categorie,
+                director,
+                lenguage,
+                subtitles,
+                poster
+            });
             res.status(201).json(created);
         }
         catch (error) {
@@ -59,8 +67,8 @@ class MoviesController {
             if (!id) {
                 return res.status(400).json({ message: "ID no proporcionado" });
             }
-            const deleted = await movie_services_1.default.delete(parseInt(id));
-            res.status(200).json(deleted);
+            await movie_services_1.default.delete(parseInt(id));
+            res.status(200).json({ message: "Movie deleted" });
         }
         catch (error) {
             res.status(404).json({ message: error.message });

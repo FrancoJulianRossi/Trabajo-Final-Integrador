@@ -46,7 +46,15 @@ const ScreeningForm: React.FC<ScreeningFormProps> = ({
   const handleSubmit = () => {
     setError("");
     if (data.start) {
-      const startDate = new Date(data.start as string);
+      // combine date and time for reliability
+      let startDate: Date;
+      if (data.date) {
+        startDate = new Date(`${(data.date as string).slice(0,10)}T${new Date(
+          data.start as string,
+        ).toISOString().split("T")[1]}`);
+      } else {
+        startDate = new Date(data.start as string);
+      }
       if (startDate.getTime() < Date.now()) {
         setError("No se puede programar una función en el pasado");
         return;
@@ -103,7 +111,16 @@ const ScreeningForm: React.FC<ScreeningFormProps> = ({
           <Form.Control
             type="date"
             value={(data.date ?? "").slice(0, 10)}
-            onChange={(e) => setData({ ...data, date: e.target.value })}
+            onChange={(e) => {
+              const newDate = e.target.value;
+              let newStart = data.start;
+              if (data.start) {
+                // preserve time portion when updating date
+                const timePart = new Date(data.start).toISOString().split("T")[1];
+                newStart = new Date(`${newDate}T${timePart}`).toISOString();
+              }
+              setData({ ...data, date: newDate, start: newStart });
+            }}
           />
         </Form.Group>
 

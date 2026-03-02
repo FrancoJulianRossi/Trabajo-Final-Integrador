@@ -1,25 +1,39 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MovieService = void 0;
-const movie_models_1 = __importDefault(require("../models/mocks/movie.models"));
+const movie_model_1 = require("../models/movie.model");
 class MovieService {
     async list() {
-        return movie_models_1.default.list();
+        return await movie_model_1.Movie.findAll();
     }
     async getById(id) {
-        return movie_models_1.default.getById(id);
+        const movie = await movie_model_1.Movie.findByPk(id);
+        if (!movie)
+            throw new Error("Movie not found");
+        return movie;
     }
-    async create(movie) {
-        return movie_models_1.default.create(movie);
+    async create(movieData) {
+        // enforce positive length (duration)
+        if (movieData.length !== undefined && movieData.length <= 0) {
+            throw new Error("Movie length must be a positive number");
+        }
+        return await movie_model_1.Movie.create(movieData);
     }
-    async update(id, movie) {
-        return movie_models_1.default.update(id, movie);
+    async update(id, movieData) {
+        const movie = await movie_model_1.Movie.findByPk(id);
+        if (!movie)
+            throw new Error("Movie not found");
+        if (movieData.length !== undefined && movieData.length <= 0) {
+            throw new Error("Movie length must be a positive number");
+        }
+        await movie.update(movieData);
+        return movie;
     }
     async delete(id) {
-        return movie_models_1.default.delete(id);
+        const movie = await movie_model_1.Movie.findByPk(id);
+        if (!movie)
+            throw new Error("Movie not found");
+        await movie.destroy();
     }
 }
 exports.MovieService = MovieService;

@@ -12,12 +12,19 @@ export class MovieService {
   }
 
   async create(movieData: Partial<Movie>): Promise<Movie> {
+    // enforce positive length (duration)
+    if (movieData.length !== undefined && movieData.length <= 0) {
+      throw new Error("Movie length must be a positive number");
+    }
     return await Movie.create(movieData);
   }
 
   async update(id: number, movieData: Partial<Movie>): Promise<Movie> {
     const movie = await Movie.findByPk(id);
     if (!movie) throw new Error("Movie not found");
+    if (movieData.length !== undefined && movieData.length <= 0) {
+      throw new Error("Movie length must be a positive number");
+    }
     await movie.update(movieData);
     return movie;
   }

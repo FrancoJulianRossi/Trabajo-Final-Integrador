@@ -1,5 +1,6 @@
 import { Room } from "../models/room.model";
 import { Seat } from "../models/seat.model";
+import { Screening } from "../models/screening.model";
 import { sequelize } from "../config/database";
 
 export class RoomService {
@@ -134,7 +135,13 @@ export class RoomService {
   async deleteRoom(id: number): Promise<boolean> {
     const room = await Room.findByPk(id);
     if (!room) return false;
-    
+
+    // make sure there are no screenings scheduled in this room
+    const count = await Screening.count({ where: { roomId: id } });
+    if (count > 0) {
+      throw new Error("Cannot delete room: it has screenings scheduled");
+    }
+
     // Soft delete
     await room.update({ isActive: false });
     return true;

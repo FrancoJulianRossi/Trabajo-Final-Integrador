@@ -8,5 +8,8 @@ const auth_controller_1 = __importDefault(require("../controllers/auth.controlle
 const router = (0, express_1.Router)();
 router.post("/auth/register", auth_controller_1.default.register.bind(auth_controller_1.default));
 router.post("/auth/login", auth_controller_1.default.login.bind(auth_controller_1.default));
+// password recovery endpoints
+router.post("/auth/forgot-password", auth_controller_1.default.forgotPassword.bind(auth_controller_1.default));
+router.post("/auth/reset-password", auth_controller_1.default.resetPassword.bind(auth_controller_1.default));
 exports.default = router;
 //# sourceMappingURL=auth.routes.js.map

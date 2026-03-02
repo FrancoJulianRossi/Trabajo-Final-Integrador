@@ -164,8 +164,38 @@ const BookingList: React.FC = () => {
         alert("Error de conexión");
       }
     } else {
-      // Create logic (kept local or TODO)
-      setItems((s) => [updated, ...s]);
+      // Create new reservation by calling backend
+      try {
+        if (import.meta.env.VITE_STATIC_MOCKS) {
+          setItems((s) => [updated, ...s]);
+        } else {
+          const seatsPayload = (updated.reservationSeats || []).map((rs) => ({
+            row: rs.seat.row,
+            column: rs.seat.column,
+          }));
+          const res = await fetch(`${API_BASE}/bookings`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+            body: JSON.stringify({
+              screening: updated.screening,
+              seats: seatsPayload,
+            }),
+          });
+          if (res.ok) {
+            const created = await res.json();
+            setItems((s) => [created, ...s]);
+          } else {
+            const text = await res.text();
+            alert("Error creando reserva: " + (text || res.status));
+          }
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Error de conexión al crear reserva");
+      }
     }
     setEditing(null);
   };

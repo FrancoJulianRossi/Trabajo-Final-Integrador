@@ -9,6 +9,12 @@ const BookingForm: React.FC<{
   onCancel: () => void;
 }> = ({ reservation, onSave, onCancel }) => {
   const [userName, setUserName] = useState(reservation.user?.name || "");
+  const [userId, setUserId] = useState<number>(
+    reservation.userId || reservation.user?.idUser || 0,
+  );
+  const [screeningId, setScreeningId] = useState<number>(
+    reservation.screeningId || reservation.screening?.idScreening || 0,
+  );
   const [date, setDate] = useState(
     reservation.screening?.date || new Date().toISOString().split("T")[0],
   );
@@ -23,6 +29,7 @@ const BookingForm: React.FC<{
     e.preventDefault();
 
     const currentSeats = reservation.reservationSeats || [];
+    // ensure ids updated into reservation
     // Parse input to find valid seats
     // Split by comma, space, or other separators
     const tokens = seatsInput.split(/[ ,]+/).filter((t) => t.trim() !== "");
@@ -41,10 +48,11 @@ const BookingForm: React.FC<{
     const updated: Reservation = {
       ...reservation,
       reservationDate: reservation.reservationDate || new Date().toISOString(),
-      screeningId: reservation.screeningId,
-      userId: reservation.userId,
+      screeningId,
+      userId,
       screening: {
         ...(reservation.screening || ({} as any)),
+        idScreening: screeningId,
         date,
         start,
       } as any,
@@ -57,6 +65,14 @@ const BookingForm: React.FC<{
   return (
     <Form onSubmit={handleSubmit}>
       <Form.Group className="mb-2">
+        <Form.Label>ID Usuario</Form.Label>
+        <Form.Control
+          type="number"
+          value={userId || ""}
+          onChange={(e) => setUserId(Number(e.target.value))}
+        />
+      </Form.Group>
+      <Form.Group className="mb-2">
         <Form.Label>Nombre usuario</Form.Label>
         <Form.Control
           value={userName}
@@ -66,7 +82,17 @@ const BookingForm: React.FC<{
       </Form.Group>
 
       <Row>
-        <Col md={6}>
+        <Col md={4}>
+          <Form.Group className="mb-2">
+            <Form.Label>ID Función</Form.Label>
+            <Form.Control
+              type="number"
+              value={screeningId || ""}
+              onChange={(e) => setScreeningId(Number(e.target.value))}
+            />
+          </Form.Group>
+        </Col>
+        <Col md={4}>
           <Form.Group className="mb-2">
             <Form.Label>Fecha</Form.Label>
             <Form.Control

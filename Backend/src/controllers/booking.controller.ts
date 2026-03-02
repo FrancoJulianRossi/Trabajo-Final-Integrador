@@ -31,19 +31,24 @@ export const getAllBookingsAdmin = async (req: Request, res: Response) => {
 };
 
 export const createBooking = async (req: Request, res: Response) => {
-  const { screening, seats } = req.body;
+  const { screening, seats, userId: requestedUserId } = req.body;
   const user = (req as any).user;
 
   if (!screening || !seats) {
     return res.status(400).json({ message: "Missing screening or seats" });
   }
 
-  // If we require auth, user should exist. If not enforced yet, handle gracefully or enforce.
-  const userId = user?.idUser;
+  // Determine which user to attribute this booking to. Admin users may specify a different
+  // userId in the request body; regular users are limited to their own id.
+  let userId: number | undefined = user?.idUser;
+  const isAdmin =
+    user &&
+    (String(user.role).toLowerCase() === "admin" || user.role === true);
+  if (isAdmin && requestedUserId) {
+    userId = requestedUserId;
+  }
+
   if (!userId) {
-    // For now, if no auth, maybe use a default or fail.
-    // The original code didn't check user per se, but passed user in entity sometimes?
-    // We will enforce it or use a fallback if user is optional (unlikely for booking).
     return res.status(401).json({ message: "User not authenticated" });
   }
 

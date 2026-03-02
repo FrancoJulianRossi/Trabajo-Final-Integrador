@@ -1,11 +1,18 @@
-import { ScreeningEntity } from "../models/mocks/entities/screening.entity";
-import { seat } from "../models/mocks/entities/seat.entity";
+import { Reservation } from "../models/reservation.model";
 export declare class BookingService {
-    private locks;
-    listReservations(): import("../models/mocks/entities/reservation.entity").Reservation[];
-    getReservationById(id: number): import("../models/mocks/entities/reservation.entity").Reservation | null;
-    createReservation(screening: ScreeningEntity, seatsList: seat[]): Promise<import("../models/mocks/entities/reservation.entity").Reservation>;
-    cancelReservation(id: number): boolean;
+    listAllReservations(): Promise<Reservation[]>;
+    listReservationsByUser(userId: number): Promise<Reservation[]>;
+    getReservationById(id: number): Promise<Reservation | null>;
+    createReservation(screeningId: number, userId: number, seats: {
+        row: number;
+        column: number;
+    }[]): Promise<Reservation>;
+    updateReservation(reservationId: number, newSeats: {
+        row: number;
+        column: number;
+    }[]): Promise<Reservation>;
+    cancelReservation(id: number): Promise<void>;
+    deleteReservation(id: number): Promise<void>;
 }
 declare const _default: BookingService;
 export default _default;

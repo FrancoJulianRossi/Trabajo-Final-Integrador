@@ -200,14 +200,17 @@ export const handlers = [
     if (conflict) {
       return res(ctx.status(409), ctx.json({ message: "Asiento ya ocupado" }));
     }
-    const reservation = {
+    const reservation: any = {
       idReservation: Date.now(),
       reservationDate: new Date().toISOString(),
       status: "confirmed",
       total: (requested.length || 0) * (body.screening.ticketPrice || 0),
-      seat: requested,
+      seats: requested,
       screening: body.screening,
     };
+    if (body.userId) {
+      reservation.userId = body.userId;
+    }
     bookings.push(reservation);
     return res(ctx.status(201), ctx.json(reservation));
   }),

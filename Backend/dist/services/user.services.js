@@ -1,20 +1,32 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserService = void 0;
-const user_models_1 = __importDefault(require("../models/mocks/user.models"));
+const user_model_1 = require("../models/user.model");
 class UserService {
     constructor() { }
-    getUserById(id) {
-        return user_models_1.default.getUsers().find((user) => user.getIdUser() === id) || null;
+    async getAllUsers() {
+        return await user_model_1.User.findAll();
     }
-    getUserByEmail(email) {
-        return (user_models_1.default.getUsers().find((user) => user.getEmail() === email) || null);
+    async getUserById(id) {
+        return await user_model_1.User.findByPk(id);
     }
-    createUser(user) {
-        user_models_1.default.getUsers().push(user);
+    async getUserByEmail(email) {
+        const user = await user_model_1.User.findOne({ where: { email } });
+        return user;
+    }
+    async createUser(userData) {
+        return await user_model_1.User.create(userData);
+    }
+    async updateUser(idUser, userData) {
+        const user = await user_model_1.User.findByPk(idUser);
+        if (!user) {
+            return null;
+        }
+        return await user.update(userData);
+    }
+    async deleteUser(idUser) {
+        const count = await user_model_1.User.destroy({ where: { idUser } });
+        return count > 0;
     }
 }
 exports.UserService = UserService;

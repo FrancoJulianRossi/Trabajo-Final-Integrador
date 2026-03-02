@@ -1,7 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ScreeningController = void 0;
-const screening_entity_1 = require("../models/mocks/entities/screening.entity");
 const screening_services_1 = require("../services/screening.services");
 class ScreeningController {
     screeningService;
@@ -9,8 +8,15 @@ class ScreeningController {
         this.screeningService = new screening_services_1.ScreeningService();
     }
     async getAllScreenings(req, res) {
-        const screenings = this.screeningService.getScreenings();
-        return res.status(200).json(screenings);
+        try {
+            const { movieId } = req.query;
+            const numMovieId = movieId ? Number(movieId) : undefined;
+            const screenings = await this.screeningService.getScreenings(numMovieId);
+            return res.status(200).json(screenings);
+        }
+        catch (error) {
+            return res.status(500).json({ message: error.message });
+        }
     }
     async getScreeningById(req, res) {
         const rawId = req.params?.id;
@@ -19,19 +25,38 @@ class ScreeningController {
         const id = Number(rawId);
         if (Number.isNaN(id))
             return res.status(400).json({ message: "Invalid id param" });
-        const screening = this.screeningService.getScreeningById(id);
-        if (screening) {
-            return res.status(200).json(screening);
+        try {
+            const screening = await this.screeningService.getScreeningById(id);
+            if (screening) {
+                return res.status(200).json(screening);
+            }
+            else {
+                return res.status(404).json({ message: "Screening not found" });
+            }
         }
-        else {
-            return res.status(404).json({ message: "Screening not found" });
+        catch (error) {
+            return res.status(500).json({ message: error.message });
         }
     }
     async createScreening(req, res) {
-        const { idScreening, date, start, end, ticketPrice } = req.body;
-        const newScreening = new screening_entity_1.ScreeningEntity(idScreening, date, start, end, ticketPrice);
-        const createdScreening = this.screeningService.createScreening(newScreening);
-        return res.status(201).json(createdScreening);
+        try {
+            const { idScreening, date, start, end, ticketPrice, movieId, roomId } = req.body;
+            const createdScreening = await this.screeningService.createScreening({
+                date,
+                start,
+                end,
+                ticketPrice,
+                movieId,
+                roomId,
+            });
+            return res.status(201).json(createdScreening);
+        }
+        catch (error) {
+            if (error.name === "ScreeningValidationError") {
+                return res.status(400).json({ message: error.message });
+            }
+            return res.status(500).json({ message: error.message });
+        }
     }
     async getSeatsForScreening(req, res) {
         const rawId = req.params?.id;
@@ -40,8 +65,13 @@ class ScreeningController {
         const id = Number(rawId);
         if (Number.isNaN(id))
             return res.status(400).json({ message: "Invalid id param" });
-        const occupied = this.screeningService.getOccupiedSeats(id);
-        return res.status(200).json({ occupied });
+        try {
+            const occupied = await this.screeningService.getOccupiedSeats(id);
+            return res.status(200).json({ occupied });
+        }
+        catch (error) {
+            return res.status(500).json({ message: error.message });
+        }
     }
     async updateScreening(req, res) {
         const rawId = req.params?.id;
@@ -50,14 +80,28 @@ class ScreeningController {
         const id = Number(rawId);
         if (Number.isNaN(id))
             return res.status(400).json({ message: "Invalid id param" });
-        const { idScreening, date, start, end, ticketPrice } = req.body;
-        const updatedScreening = new screening_entity_1.ScreeningEntity(idScreening, date, start, end, ticketPrice);
-        const result = this.screeningService.updateScreening(id, updatedScreening);
-        if (result) {
-            return res.status(200).json(result);
+        try {
+            const { date, start, end, ticketPrice, movieId, roomId } = req.body;
+            const result = await this.screeningService.updateScreening(id, {
+                date,
+                start,
+                end,
+                ticketPrice,
+                movieId,
+                roomId,
+            });
+            if (result) {
+                return res.status(200).json(result);
+            }
+            else {
+                return res.status(404).json({ message: "Screening not found" });
+            }
         }
-        else {
-            return res.status(404).json({ message: "Screening not found" });
+        catch (error) {
+            if (error.name === "ScreeningValidationError") {
+                return res.status(400).json({ message: error.message });
+            }
+            return res.status(500).json({ message: error.message });
         }
     }
     async deleteScreening(req, res) {
@@ -67,14 +111,22 @@ class ScreeningController {
         const id = Number(rawId);
         if (Number.isNaN(id))
             return res.status(400).json({ message: "Invalid id param" });
-        const success = this.screeningService.deleteScreening(id);
-        if (success) {
-            return res
-                .status(200)
-                .json({ message: "Screening deleted successfully" });
+        try {
+            const success = await this.screeningService.deleteScreening(id);
+            if (success) {
+                return res
+                    .status(200)
+                    .json({ message: "Screening deleted successfully" });
+            }
+            else {
+                return res.status(404).json({ message: "Screening not found" });
+            }
         }
-        else {
-            return res.status(404).json({ message: "Screening not found" });
+        catch (error) {
+            if (error instanceof screening_services_1.ScreeningHasReservationsError) {
+                return res.status(409).json({ message: error.message }); // 409 Conflict
+            }
+            return res.status(500).json({ message: error.message });
         }
     }
 }
