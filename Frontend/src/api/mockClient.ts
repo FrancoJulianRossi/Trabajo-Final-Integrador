@@ -1,11 +1,82 @@
 const USE_STATIC = Boolean(import.meta.env.VITE_STATIC_MOCKS);
 const API_BASE = import.meta.env.VITE_API_URL || "http://127.0.0.1:3000/api";
 
+function toUserErrorMessage(
+  url: string,
+  status: number,
+  backendMessage?: string,
+): string {
+  const normalized = (backendMessage || "").toLowerCase();
+
+  if (url.includes("/auth/login")) {
+    if (status === 400) return "Debes ingresar correo y contrasena.";
+    if (status === 401) return "Correo o contrasena incorrectos.";
+    if (status >= 500) return "No se pudo iniciar sesion. Intenta nuevamente.";
+  }
+
+  if (url.includes("/auth/register")) {
+    if (status === 409) return "El correo ya esta en uso.";
+    if (status === 400) return "Completa todos los campos requeridos.";
+    if (status >= 500) return "No se pudo crear la cuenta. Intenta nuevamente.";
+  }
+
+  if (url.includes("/auth/forgot-password")) {
+    if (status === 400) return "Debes ingresar un correo valido.";
+    if (status >= 500)
+      return "No se pudo procesar la recuperacion de contrasena.";
+  }
+
+  if (url.includes("/auth/reset-password")) {
+    if (status === 400 && normalized.includes("invalid"))
+      return "El token es invalido o vencio.";
+    if (status === 400) return "Debes completar token y nueva contrasena.";
+    if (status === 404) return "No se encontro el usuario para este token.";
+    if (status >= 500) return "No se pudo cambiar la contrasena.";
+  }
+
+  if (url.includes("/users/me")) {
+    if (status === 400 && normalized.includes("current password required")) {
+      return "Debes ingresar tu contrasena actual para cambiarla.";
+    }
+    if (status === 401 && normalized.includes("current password is incorrect")) {
+      return "La contrasena actual es incorrecta.";
+    }
+    if (status === 401) return "Tu sesion expiro. Inicia sesion nuevamente.";
+    if (status >= 500) return "No se pudo actualizar el perfil.";
+  }
+
+  if (backendMessage) return backendMessage;
+  return `Error HTTP ${status}`;
+}
+
 async function fetchJson(url: string, opts?: RequestInit) {
   const res = await fetch(url, opts);
   if (!res.ok) {
-    const errorText = await res.text();
-    throw new Error(`HTTP ${res.status}: ${errorText}`);
+    const contentType = res.headers.get("content-type") || "";
+    let backendMessage = "";
+
+    if (contentType.includes("application/json")) {
+      const data = await res.json().catch(() => null);
+      if (data && typeof data.message === "string") {
+        backendMessage = data.message;
+      }
+    } else {
+      const text = await res.text().catch(() => "");
+      if (text) {
+        try {
+          const parsed = JSON.parse(text);
+          if (parsed && typeof parsed.message === "string") {
+            backendMessage = parsed.message;
+          } else {
+            backendMessage = text;
+          }
+        } catch {
+          backendMessage = text;
+        }
+      }
+    }
+
+    throw new Error(toUserErrorMessage(url, res.status, backendMessage));
   }
   // Si la respuesta es 204 No Content, devolver null
   if (res.status === 204) return null;

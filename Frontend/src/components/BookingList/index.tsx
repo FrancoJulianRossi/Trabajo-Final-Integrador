@@ -7,18 +7,21 @@ import {
   Button,
   Table,
   Modal,
+  Alert,
 } from "react-bootstrap";
 import { useAuth } from "../../contexts/AuthContext";
 import BookingView from "./BookingView";
 import BookingForm from "./BookingForm";
 
-import type { Reservation } from "./types";
+import type { Reservation, Screening, User } from "./types";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://127.0.0.1:3000/api";
 
 const BookingList: React.FC = () => {
   const { token, user } = useAuth();
   const [items, setItems] = useState<Reservation[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [screenings, setScreenings] = useState<Screening[]>([]);
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState("");
   const [filterDate, setFilterDate] = useState("");
@@ -26,6 +29,12 @@ const BookingList: React.FC = () => {
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Reservation | null>(null);
   const [editing, setEditing] = useState<Reservation | null>(null);
+  const [saveLoading, setSaveLoading] = useState(false);
+  const [saveError, setSaveError] = useState("");
+
+  const isCreating =
+    !!editing &&
+    !items.some((i) => i.idReservation === editing.idReservation);
 
   useEffect(() => {
     const fetchReservations = async () => {
@@ -50,7 +59,7 @@ const BookingList: React.FC = () => {
             setItems([]);
           }
         }
-      } catch (err) {
+      } catch {
         setItems([]);
       } finally {
         setLoading(false);
@@ -58,6 +67,29 @@ const BookingList: React.FC = () => {
     };
     fetchReservations();
   }, [token, user?.role]);
+
+  useEffect(() => {
+    const fetchFormData = async () => {
+      try {
+        const [usersRes, screeningsRes] = await Promise.all([
+          fetch(`${API_BASE}/users`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          }),
+          fetch(`${API_BASE}/screenings`),
+        ]);
+
+        const usersData = usersRes.ok ? await usersRes.json() : [];
+        const screeningsData = screeningsRes.ok ? await screeningsRes.json() : [];
+        setUsers(Array.isArray(usersData) ? usersData : []);
+        setScreenings(Array.isArray(screeningsData) ? screeningsData : []);
+      } catch {
+        setUsers([]);
+        setScreenings([]);
+      }
+    };
+
+    fetchFormData();
+  }, [token]);
 
   const filtered = useMemo(() => {
     let out = items;
@@ -79,7 +111,7 @@ const BookingList: React.FC = () => {
 
   useEffect(() => {
     if (page > totalPages) setPage(totalPages);
-  }, [totalPages]);
+  }, [totalPages, page]);
 
   const pageItems = filtered.slice(
     (page - 1) * itemsPerPage,
@@ -87,11 +119,10 @@ const BookingList: React.FC = () => {
   );
 
   const handleDelete = async (idReservation: number) => {
-    if (!window.confirm("¿Confirma eliminar la reserva?")) {
+    if (!window.confirm("Confirma eliminar la reserva?")) {
       return;
     }
 
-    // try backend DELETE, otherwise remove locally
     try {
       if (import.meta.env.VITE_STATIC_MOCKS) {
         setItems((s) => s.filter((i) => i.idReservation !== idReservation));
@@ -104,25 +135,20 @@ const BookingList: React.FC = () => {
       if (res.ok) {
         setItems((s) => s.filter((i) => i.idReservation !== idReservation));
       } else {
-        // If error, also remove from list? Or alert?
-        // The original code removed it anyway, let's keep that behavior or improve
-        // For safety, maybe alert if failed? But existing code forced removal.
-        // Let's stick to existing behavior but add alert if needed.
-        // Actually, if it fails, we should probably NOT remove it from UI if it's a real backend.
-        // But the previous code did:
-        // } else { setItems(...) }
-        // I will keep the behavior consistent with previous code but add the confirm.
-        setItems((s) => s.filter((i) => i.idReservation !== idReservation));
+        const text = await res.text();
+        alert(`No se pudo eliminar la reserva: ${text || res.status}`);
       }
-    } catch (err) {
-      setItems((s) => s.filter((i) => i.idReservation !== idReservation));
+    } catch {
+      alert("Error de conexion al eliminar la reserva.");
     }
   };
 
   const handleSave = async (updated: Reservation) => {
+    setSaveError("");
+    setSaveLoading(true);
+
     const exists = items.find((i) => i.idReservation === updated.idReservation);
     if (exists) {
-      // Update logic
       try {
         if (import.meta.env.VITE_STATIC_MOCKS) {
           setItems((s) =>
@@ -156,15 +182,18 @@ const BookingList: React.FC = () => {
               ),
             );
           } else {
-            alert("Error al actualizar la reserva");
+            const text = await res.text();
+            setSaveError(text || "Error al actualizar la reserva.");
+            setSaveLoading(false);
+            return;
           }
         }
-      } catch (err) {
-        console.error(err);
-        alert("Error de conexión");
+      } catch {
+        setSaveError("Error de conexion al actualizar la reserva.");
+        setSaveLoading(false);
+        return;
       }
     } else {
-      // Create new reservation by calling backend
       try {
         if (import.meta.env.VITE_STATIC_MOCKS) {
           setItems((s) => [updated, ...s]);
@@ -173,6 +202,7 @@ const BookingList: React.FC = () => {
             row: rs.seat.row,
             column: rs.seat.column,
           }));
+
           const res = await fetch(`${API_BASE}/bookings`, {
             method: "POST",
             headers: {
@@ -180,23 +210,55 @@ const BookingList: React.FC = () => {
               ...(token ? { Authorization: `Bearer ${token}` } : {}),
             },
             body: JSON.stringify({
+              userId: updated.userId,
               screening: updated.screening,
               seats: seatsPayload,
             }),
           });
           if (res.ok) {
             const created = await res.json();
-            setItems((s) => [created, ...s]);
+            const hydrated: Reservation = {
+              ...updated,
+              ...created,
+              idReservation: created?.idReservation ?? updated.idReservation,
+              userId: created?.userId ?? updated.userId,
+              user:
+                created?.user ||
+                updated.user ||
+                users.find((u) => u.idUser === (created?.userId ?? updated.userId)),
+              screeningId: created?.screeningId ?? updated.screeningId,
+              screening:
+                created?.screening ||
+                updated.screening ||
+                screenings.find(
+                  (s) =>
+                    s.idScreening ===
+                    (created?.screeningId ?? updated.screeningId),
+                ) ||
+                updated.screening,
+              reservationSeats:
+                created?.reservationSeats || updated.reservationSeats || [],
+              reservationDate:
+                created?.reservationDate || updated.reservationDate || "",
+              status: created?.status || updated.status || "Confirmed",
+              total: created?.total ?? updated.total ?? 0,
+            };
+            setItems((s) => [hydrated, ...s]);
           } else {
             const text = await res.text();
-            alert("Error creando reserva: " + (text || res.status));
+            setSaveError(`Error creando reserva: ${text || res.status}`);
+            setSaveLoading(false);
+            return;
           }
         }
-      } catch (err) {
-        console.error(err);
-        alert("Error de conexión al crear reserva");
+      } catch {
+        setSaveError("Error de conexion al crear reserva.");
+        setSaveLoading(false);
+        return;
       }
     }
+
+    setSaveLoading(false);
     setEditing(null);
   };
 
@@ -281,7 +343,7 @@ const BookingList: React.FC = () => {
             className="ms-2"
             onClick={() =>
               setEditing({
-                idReservation: Date.now(),
+                idReservation: 0,
                 userId: 0,
                 screeningId: 0,
                 screening: {
@@ -300,17 +362,27 @@ const BookingList: React.FC = () => {
               } as Reservation)
             }
           >
-            Nueva
+            Nueva reserva
           </Button>
         </Col>
       </Row>
+
+      {saveError && (
+        <Row className="mb-3">
+          <Col>
+            <Alert variant="danger" className="mb-0">
+              {saveError}
+            </Alert>
+          </Col>
+        </Row>
+      )}
 
       <Table striped bordered hover responsive>
         <thead>
           <tr>
             <th>ID</th>
             <th>Cliente</th>
-            <th>Película</th>
+            <th>Pelicula</th>
             <th>Fecha</th>
             <th>Inicio</th>
             <th>Asientos</th>
@@ -321,7 +393,7 @@ const BookingList: React.FC = () => {
           {pageItems.map((r) => (
             <tr key={r.idReservation}>
               <td>{r.idReservation}</td>
-              <td>{r.userId}</td>
+              <td>{r.user?.name || `#${r.userId}`}</td>
               <td>{r.screening?.movie?.name}</td>
               <td>{r.screening?.date}</td>
               <td>{r.screening?.start}</td>
@@ -336,6 +408,14 @@ const BookingList: React.FC = () => {
               <td>
                 <Button size="sm" onClick={() => setSelected(r)}>
                   Ver
+                </Button>{" "}
+                <Button
+                  size="sm"
+                  variant="warning"
+                  className="ms-1"
+                  onClick={() => setEditing(r)}
+                >
+                  Editar
                 </Button>{" "}
                 <Button
                   size="sm"
@@ -392,16 +472,24 @@ const BookingList: React.FC = () => {
         </Modal.Body>
       </Modal>
 
-      <Modal show={!!editing} onHide={() => setEditing(null)} size="lg">
-        <Modal.Header closeButton>
-          <Modal.Title>
-            {editing?.idReservation ? "Editar Reserva" : "Nueva Reserva"}
-          </Modal.Title>
+      <Modal
+        show={!!editing}
+        onHide={() => {
+          if (!saveLoading) setEditing(null);
+        }}
+        size="lg"
+      >
+        <Modal.Header closeButton={!saveLoading}>
+          <Modal.Title>{isCreating ? "Nueva Reserva" : "Editar Reserva"}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           {editing && (
             <BookingForm
               reservation={editing}
+              users={users}
+              screenings={screenings}
+              isCreating={isCreating}
+              saving={saveLoading}
               onSave={handleSave}
               onCancel={() => setEditing(null)}
             />

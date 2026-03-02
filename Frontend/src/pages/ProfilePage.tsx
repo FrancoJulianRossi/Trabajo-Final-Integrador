@@ -34,7 +34,14 @@ export const ProfilePage: React.FC = () => {
             setMessage("Perfil actualizado correctamente");
             await refreshProfile();
         } catch (err: any) {
-            setError(err.message || "Error");
+            const msg = err?.message || "No se pudo actualizar el perfil.";
+            if (msg.toLowerCase().includes("contrasena actual es incorrecta")) {
+                setError(
+                    "La contrasena actual que ingresaste es incorrecta. Verificala e intenta nuevamente.",
+                );
+            } else {
+                setError(msg);
+            }
         } finally {
             setLoading(false);
             setNewPassword("");

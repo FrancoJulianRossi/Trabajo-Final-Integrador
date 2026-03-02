@@ -1,13 +1,5 @@
 import React, { useState } from "react";
-import {
-  Card,
-  Form,
-  Button,
-  Alert,
-  Container,
-  Row,
-  Col,
-} from "react-bootstrap";
+import { Card, Form, Button, Alert, Container, Row, Col } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -32,13 +24,16 @@ export const LoginRegister: React.FC<{
         await login(email, password);
       } else {
         await register(name, email, password);
-        if (onShowNotification) {
-          onShowNotification("Usuario creado correctamente");
-        }
+        onShowNotification?.("Usuario creado correctamente");
       }
       onClose?.();
     } catch (err: any) {
-      setError(err.message);
+      setError(
+        err?.message ||
+          (isLogin
+            ? "No se pudo iniciar sesion. Intenta nuevamente."
+            : "No se pudo crear la cuenta. Intenta nuevamente."),
+      );
     } finally {
       setLoading(false);
     }
@@ -51,9 +46,10 @@ export const LoginRegister: React.FC<{
           <Card className="shadow-lg border-0">
             <Card.Body className="p-5">
               <h2 className="mb-4 text-center fw-bold text-primary">
-                {isLogin ? "🎫 Inicia Sesión" : "📝 Crear Cuenta"}
+                {isLogin ? "Inicia Sesion" : "Crear Cuenta"}
               </h2>
               {error && <Alert variant="danger">{error}</Alert>}
+
               <Form onSubmit={handleSubmit}>
                 {!isLogin && (
                   <Form.Group className="mb-3">
@@ -78,10 +74,10 @@ export const LoginRegister: React.FC<{
                   />
                 </Form.Group>
                 <Form.Group className="mb-4">
-                  <Form.Label className="fw-bold">Contraseña</Form.Label>
+                  <Form.Label className="fw-bold">Contrasena</Form.Label>
                   <Form.Control
                     type="password"
-                    placeholder="••••••••"
+                    placeholder="********"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -93,13 +89,10 @@ export const LoginRegister: React.FC<{
                   disabled={loading}
                   className="w-100 fw-bold mb-3"
                 >
-                  {loading
-                    ? "Cargando..."
-                    : isLogin
-                      ? "Ingresar"
-                      : "Crear Cuenta"}
+                  {loading ? "Cargando..." : isLogin ? "Ingresar" : "Crear Cuenta"}
                 </Button>
               </Form>
+
               <Button
                 variant="outline-secondary"
                 onClick={() => {
@@ -108,13 +101,12 @@ export const LoginRegister: React.FC<{
                 }}
                 className="w-100 fw-bold"
               >
-                {isLogin
-                  ? "¿No tienes cuenta? Registrarse"
-                  : "¿Ya tienes cuenta? Ingresar"}
+                {isLogin ? "No tienes cuenta? Registrarse" : "Ya tienes cuenta? Ingresar"}
               </Button>
+
               {isLogin && (
                 <div className="text-center mt-2">
-                  <Link to="/forgot-password">¿Olvidaste tu contraseña?</Link>
+                  <Link to="/forgot-password">Olvidaste tu contrasena?</Link>
                 </div>
               )}
             </Card.Body>
