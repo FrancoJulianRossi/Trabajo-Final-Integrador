@@ -1,8 +1,11 @@
 import app from "./app";
+import { connectDB } from "./config/database";
 
 const port = process.env.PORT ? Number(process.env.PORT) : 3000;
 
-app.listen(port, () => {
-	// tslint:disable-next-line:no-console
-	console.log(`Server listening on port ${port}`);
+connectDB().then(() => {
+  app.listen(port, () => {
+    // tslint:disable-next-line:no-console
+    console.log(`Server listening on port ${port}`);
+  });
 });

@@ -1,11 +1,11 @@
 import { Request, Response } from "express";
-import MoviesModel from "../models/mocks/movie.models";
+import movieService from "../services/movie.services";
 import { Movie } from "../models/mocks/entities/movie.entity";
 
 class MoviesController {
     async list(req: Request, res: Response) {
         try {
-            const movies = await MoviesModel.list();
+            const movies = await movieService.list();
             res.status(200).json(movies);
         } catch (error: any) {
             res.status(500).json({ message: error.message });
@@ -18,7 +18,7 @@ class MoviesController {
             if (!id) {
                 return res.status(400).json({ message: "ID no proporcionado" });
             }
-            const movie = await MoviesModel.getById(parseInt(id));
+            const movie = await movieService.getById(parseInt(id));
             res.status(200).json(movie);
         } catch (error: any) {
             res.status(404).json({ message: error.message });
@@ -52,7 +52,7 @@ class MoviesController {
                 poster
             );
 
-            const created = await MoviesModel.create(newMovie);
+            const created = await movieService.create(newMovie);
             res.status(201).json(created);
         } catch (error: any) {
             res.status(400).json({ message: error.message });
@@ -66,7 +66,7 @@ class MoviesController {
                 return res.status(400).json({ message: "ID no proporcionado" });
             }
             const updatedMovie = req.body;
-            const movie = await MoviesModel.update(parseInt(id), updatedMovie);
+            const movie = await movieService.update(parseInt(id), updatedMovie);
             res.status(200).json(movie);
         } catch (error: any) {
             res.status(404).json({ message: error.message });
@@ -79,7 +79,7 @@ class MoviesController {
             if (!id) {
                 return res.status(400).json({ message: "ID no proporcionado" });
             }
-            const deleted = await MoviesModel.delete(parseInt(id));
+            const deleted = await movieService.delete(parseInt(id));
             res.status(200).json(deleted);
         } catch (error: any) {
             res.status(404).json({ message: error.message });

@@ -97,7 +97,7 @@ export class Movie {
         Descripción: ${this.Description}`;
     }
 
-    isSubtitled(): boolean{
+    isSubtitled(): boolean {
         return this.Subtitles;
     }
 
