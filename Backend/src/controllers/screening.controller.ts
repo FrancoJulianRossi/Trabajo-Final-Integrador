@@ -1,5 +1,8 @@
 import { Request, Response } from "express";
-import { ScreeningService } from "../services/screening.services";
+import {
+  ScreeningService,
+  ScreeningHasReservationsError,
+} from "../services/screening.services";
 
 export class ScreeningController {
   private screeningService: ScreeningService;
@@ -9,7 +12,9 @@ export class ScreeningController {
 
   async getAllScreenings(req: Request, res: Response): Promise<Response> {
     try {
-      const screenings = await this.screeningService.getScreenings();
+      const { movieId } = req.query;
+      const numMovieId = movieId ? Number(movieId) : undefined;
+      const screenings = await this.screeningService.getScreenings(numMovieId);
       return res.status(200).json(screenings);
     } catch (error: any) {
       return res.status(500).json({ message: error.message });
@@ -22,7 +27,7 @@ export class ScreeningController {
     const id = Number(rawId);
     if (Number.isNaN(id))
       return res.status(400).json({ message: "Invalid id param" });
-    
+
     try {
       const screening = await this.screeningService.getScreeningById(id);
       if (screening) {
@@ -37,17 +42,21 @@ export class ScreeningController {
 
   async createScreening(req: Request, res: Response): Promise<Response> {
     try {
-      const { idScreening, date, start, end, ticketPrice, movieId, roomId } = req.body;
+      const { idScreening, date, start, end, ticketPrice, movieId, roomId } =
+        req.body;
       const createdScreening = await this.screeningService.createScreening({
         date,
         start,
         end,
         ticketPrice,
         movieId,
-        roomId
+        roomId,
       });
       return res.status(201).json(createdScreening);
     } catch (error: any) {
+      if (error.name === "ScreeningValidationError") {
+        return res.status(400).json({ message: error.message });
+      }
       return res.status(500).json({ message: error.message });
     }
   }
@@ -58,7 +67,7 @@ export class ScreeningController {
     const id = Number(rawId);
     if (Number.isNaN(id))
       return res.status(400).json({ message: "Invalid id param" });
-    
+
     try {
       const occupied = await this.screeningService.getOccupiedSeats(id);
       return res.status(200).json({ occupied });
@@ -73,7 +82,7 @@ export class ScreeningController {
     const id = Number(rawId);
     if (Number.isNaN(id))
       return res.status(400).json({ message: "Invalid id param" });
-    
+
     try {
       const { date, start, end, ticketPrice, movieId, roomId } = req.body;
       const result = await this.screeningService.updateScreening(id, {
@@ -82,7 +91,7 @@ export class ScreeningController {
         end,
         ticketPrice,
         movieId,
-        roomId
+        roomId,
       });
       if (result) {
         return res.status(200).json(result);
@@ -90,6 +99,9 @@ export class ScreeningController {
         return res.status(404).json({ message: "Screening not found" });
       }
     } catch (error: any) {
+      if (error.name === "ScreeningValidationError") {
+        return res.status(400).json({ message: error.message });
+      }
       return res.status(500).json({ message: error.message });
     }
   }
@@ -100,7 +112,7 @@ export class ScreeningController {
     const id = Number(rawId);
     if (Number.isNaN(id))
       return res.status(400).json({ message: "Invalid id param" });
-    
+
     try {
       const success = await this.screeningService.deleteScreening(id);
       if (success) {
@@ -111,6 +123,9 @@ export class ScreeningController {
         return res.status(404).json({ message: "Screening not found" });
       }
     } catch (error: any) {
+      if (error instanceof ScreeningHasReservationsError) {
+        return res.status(409).json({ message: error.message }); // 409 Conflict
+      }
       return res.status(500).json({ message: error.message });
     }
   }
