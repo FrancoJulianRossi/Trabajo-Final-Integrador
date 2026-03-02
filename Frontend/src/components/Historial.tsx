@@ -14,21 +14,30 @@ import {
 export const Historial: React.FC = () => {
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const { token } = useAuth();
-  // const API_BASE = "http://127.0.0.1:3000/api";
+  const { token, user } = useAuth();
+  //const API_BASE = import.meta.env.VITE_API_URL || "http://127.0.0.1:3000/api"; 
 
   useEffect(() => {
     const fetch_bookings = async () => {
       try {
+        if (!token) {
+          setBookings([]);
+          return;
+        }
         const { getBookings } = await import("../api/mockClient");
-        const data = await getBookings(token || undefined);
-        setBookings(data || []);
+        const data = await getBookings(token);
+        // Filter by current user ID (in case of static mocks)
+        const filteredData =
+          user && user.idUser
+            ? (data || []).filter((b: any) => b.userId === user.idUser)
+            : data || [];
+        setBookings(filteredData);
       } finally {
         setLoading(false);
       }
     };
     fetch_bookings();
-  }, []);
+  }, [token, user]);
 
   if (loading)
     return (
@@ -54,16 +63,55 @@ export const Historial: React.FC = () => {
                   <Card.Title className="fw-bold text-primary">
                     Reserva #{b.idReservation}
                   </Card.Title>
+                  <Card.Subtitle className="mb-2 text-muted">
+                    🎬 {b.screening?.movie?.name}
+                  </Card.Subtitle>
                   <ListGroup variant="flush" className="mt-3">
                     <ListGroup.Item>
-                      <strong>📅 Fecha:</strong>
+                      <strong>📅 Función:</strong>
+                      <br />
+                      <small>
+                        {new Date(b.screening?.date).toLocaleDateString()}{" "}
+                        {new Date(b.screening?.start).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}{" "}
+                        -{" "}
+                        {new Date(b.screening?.end).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </small>
+                    </ListGroup.Item>
+                    <ListGroup.Item>
+                      <strong>📍 Sala:</strong> {b.screening?.room?.name} (
+                      {b.screening?.room?.type})
+                    </ListGroup.Item>
+                    <ListGroup.Item>
+                      <strong>🎟️ Asientos:</strong>
+                      <br />
+                      <small>
+                        {b.reservationSeats
+                          ?.map(
+                            (rs: any) =>
+                              `${String.fromCharCode(64 + rs.seat.row)}${rs.seat.column}`,
+                          )
+                          .join(" | ")}
+                      </small>
+                    </ListGroup.Item>
+                    <ListGroup.Item>
+                      <strong>🛒 Total de Compra:</strong>{" "}
+                      <span className="text-success fw-bold">${b.total}</span>
+                    </ListGroup.Item>
+                    <ListGroup.Item>
+                      <strong>🗓️ Fecha y Hora de Compra:</strong>
                       <br />
                       <small>
                         {new Date(b.reservationDate).toLocaleString()}
                       </small>
                     </ListGroup.Item>
                     <ListGroup.Item>
-                      <strong>📊 Estado:</strong>
+                      <strong>📊 Estado de la Reserva:</strong>
                       <br />
                       <Badge
                         bg={b.status === "confirmed" ? "success" : "warning"}
@@ -71,21 +119,6 @@ export const Historial: React.FC = () => {
                       >
                         {b.status === "confirmed" ? "✓ Confirmada" : b.status}
                       </Badge>
-                    </ListGroup.Item>
-                    <ListGroup.Item>
-                      <strong>💰 Total:</strong>{" "}
-                      <span className="text-success">${b.total}</span>
-                    </ListGroup.Item>
-                    <ListGroup.Item>
-                      <strong>🎟️ Asientos:</strong>
-                      <br />
-                      <small>
-                        {b.seat
-                          ?.map(
-                            (s: any) => `Fila ${s.row}, Asiento ${s.column}`
-                          )
-                          .join(" | ")}
-                      </small>
                     </ListGroup.Item>
                   </ListGroup>
                 </Card.Body>
