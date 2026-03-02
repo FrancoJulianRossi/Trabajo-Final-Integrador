@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import movieService from "../services/movie.services";
-import { Movie } from "../models/mocks/entities/movie.entity";
 
 class MoviesController {
     async list(req: Request, res: Response) {
@@ -39,8 +38,7 @@ class MoviesController {
                 poster,
             } = req.body;
 
-            const newMovie = new Movie(
-                0,
+            const created = await movieService.create({
                 name,
                 length,
                 description,
@@ -50,9 +48,7 @@ class MoviesController {
                 lenguage,
                 subtitles,
                 poster
-            );
-
-            const created = await movieService.create(newMovie);
+            });
             res.status(201).json(created);
         } catch (error: any) {
             res.status(400).json({ message: error.message });
@@ -79,8 +75,8 @@ class MoviesController {
             if (!id) {
                 return res.status(400).json({ message: "ID no proporcionado" });
             }
-            const deleted = await movieService.delete(parseInt(id));
-            res.status(200).json(deleted);
+            await movieService.delete(parseInt(id));
+            res.status(200).json({ message: "Movie deleted" });
         } catch (error: any) {
             res.status(404).json({ message: error.message });
         }
