@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Container, Button } from "react-bootstrap";
 import UserList from "./UserList";
 import BookingList from "./BookingList";
@@ -38,6 +38,7 @@ export const AdminPanel: React.FC = () => {
         </Button>
         <Button
           variant={view === "bookings" ? "primary" : "outline-primary"}
+          className="me-2"
           onClick={() => setView("bookings")}
         >
           Reservas

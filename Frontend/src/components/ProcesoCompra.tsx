@@ -9,6 +9,7 @@ import {
   Alert,
   ListGroup,
 } from "react-bootstrap";
+import { createBooking } from "../api/mockClient";
 
 interface Seat {
   id: number;
@@ -40,29 +41,17 @@ export const ProcesoCompra: React.FC<{
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const { token } = useAuth();
-  const API_BASE = "http://127.0.0.1:3000/api";
-
   const total = seats.length * screening.ticketPrice;
 
   const handleConfirm = async () => {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`${API_BASE}/bookings`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token && { Authorization: `Bearer ${token}` }),
-        },
-        body: JSON.stringify({
-          screening,
-          seats: seats.map((s) => ({ row: s.row, column: s.column })),
-        }),
-      });
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.message || "Error en la reserva");
-      }
+      const payload = {
+        screening,
+        seats: seats.map((s) => ({ row: s.row, column: s.column })),
+      };
+      await createBooking(payload, token || undefined);
       onConfirm();
     } catch (err: any) {
       setError(err.message);

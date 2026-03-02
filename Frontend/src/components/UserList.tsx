@@ -33,12 +33,18 @@ const UserList: React.FC = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const res = await fetch(`${API_BASE}/users`);
-        if (res.ok) {
+        if (import.meta.env.VITE_STATIC_MOCKS) {
+          const res = await fetch(`/mocks/users.json`);
           const data = await res.json();
           setItems(Array.isArray(data) ? data : []);
         } else {
-          setItems([]);
+          const res = await fetch(`${API_BASE}/users`);
+          if (res.ok) {
+            const data = await res.json();
+            setItems(Array.isArray(data) ? data : []);
+          } else {
+            setItems([]);
+          }
         }
       } catch (err) {
         setItems([]);
@@ -76,6 +82,10 @@ const UserList: React.FC = () => {
 
   const handleDelete = async (id: number) => {
     try {
+      if (import.meta.env.VITE_STATIC_MOCKS) {
+        setItems((s) => s.filter((u) => u.id !== id));
+        return;
+      }
       const res = await fetch(`${API_BASE}/users/${id}`, { method: "DELETE" });
       if (res.ok) setItems((s) => s.filter((u) => u.id !== id));
       else setItems((s) => s.filter((u) => u.id !== id));

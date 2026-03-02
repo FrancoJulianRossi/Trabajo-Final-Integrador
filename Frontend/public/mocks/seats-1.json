@@ -1,0 +1,6 @@
+{
+  "occupied": [
+    { "row": 1, "column": 2 },
+    { "row": 2, "column": 3 }
+  ]
+}
