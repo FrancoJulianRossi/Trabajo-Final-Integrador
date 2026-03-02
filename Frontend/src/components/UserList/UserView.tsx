@@ -1,13 +1,7 @@
 import React from "react";
 import { Button } from "react-bootstrap";
 
-interface User {
-  id: number;
-  name: string;
-  email: string;
-  role?: string;
-  createdAt?: string;
-}
+import type { User } from "./types";
 
 const UserView: React.FC<{ user: User; onClose: () => void }> = ({
   user,
@@ -16,13 +10,13 @@ const UserView: React.FC<{ user: User; onClose: () => void }> = ({
   return (
     <div>
       <h5>
-        {user.name} (#{user.id})
+        {user.name} (#{user.idUser})
       </h5>
       <p>
         <strong>Email:</strong> {user.email}
       </p>
       <p>
-        <strong>Rol:</strong> {user.role}
+        <strong>Rol:</strong> {user.role ? "Admin" : "Client"}
       </p>
       <p>
         <small>Creado: {user.createdAt}</small>
