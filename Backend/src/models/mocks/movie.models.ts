@@ -119,4 +119,3 @@ export class MoviesModel {
 }
 
 export default new MoviesModel();
-

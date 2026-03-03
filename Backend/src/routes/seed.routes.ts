@@ -1,159 +1,221 @@
 import { Router, Request, Response } from "express";
-import MoviesModel from "../models/mocks/movie.models";
-import { seedRooms } from "../models/mocks/room.models";
-import { seedScreenings } from "../models/mocks/screening.models";
-import { seedSeats } from "../models/mocks/seat.model";
-import ReservationMock from "../models/mocks/reservation.models";
-import UserMock, { seedUsers } from "../models/mocks/user.models";
+import { Movie } from "../models/movie.model";
+import { User } from "../models/user.model";
+import { Room } from "../models/room.model";
+import { Seat } from "../models/seat.model";
+import { Screening } from "../models/screening.model";
+import { Reservation } from "../models/reservation.model";
+import { ReservationSeat } from "../models/reservation-seat.model";
+import { Carousel } from "../models/carousel.model";
 import bcrypt from "bcryptjs";
-import { Movie } from "../models/mocks/entities/movie.entity";
-import { Room } from "../models/mocks/entities/room.entity";
-import { ScreeningEntity } from "../models/mocks/entities/screening.entity";
-import { seat } from "../models/mocks/entities/seat.entity";
 
 const router = Router();
 
 router.post("/seed", async (req: Request, res: Response) => {
-  // Example seed data
-  const movies = [
-    new Movie(
-      1,
-      "Inception",
-      148,
-      "Sueños dentro de sueños.",
-      "Ciencia ficción",
-      "Estreno",
-      "Christopher Nolan",
-      "Inglés",
-      true,
-      "https://m.media-amazon.com/images/I/81p+xe8cbnL._AC_SL1500_.jpg"
-    ),
-    new Movie(
-      2,
-      "Interstellar",
-      169,
-      "Viaje espacial y relatividad.",
-      "Ciencia ficción",
-      "Estreno",
-      "Christopher Nolan",
-      "Inglés",
-      true,
-      ""
-    ),
-    new Movie(
-      3,
-      "The Dark Knight",
-      152,
-      "Batman enfrenta al Joker.",
-      "Acción",
-      "Clásico",
-      "Christopher Nolan",
-      "Inglés",
-      true,
-      "https://m.media-amazon.com/images/I/51EbJjlY3rL._AC_.jpg"
-    ),
-    new Movie(
-      4,
-      "Pulp Fiction",
-      154,
-      "Historias entrelazadas de crimen.",
-      "Crimen",
-      "Clásico",
-      "Quentin Tarantino",
-      "Inglés",
-      true,
-      "https://m.media-amazon.com/images/I/71c05lTE03L._AC_SL1024_.jpg"
-    ),
-    new Movie(
-      5,
-      "The Matrix",
-      136,
-      "Realidad simulada y revolución.",
-      "Ciencia ficción",
-      "Clásico",
-      "The Wachowskis",
-      "Inglés",
-      true,
-      "https://m.media-amazon.com/images/I/51EG732BV3L._AC_.jpg"
-    ),
-    new Movie(
-      6,
-      "Forrest Gump",
-      142,
-      "Vida extraordinaria de un hombre común.",
-      "Drama",  
-      "Clásico",
-      "Robert Zemeckis",
-      "Inglés", 
-      true,
-      "https://m.media-amazon.com/images/I/61+o+R8KJDL._AC_SL1024_.jpg"
-    ),
+  try {
+    // Clear data (order matters due to FKs)
+    await ReservationSeat.destroy({ where: {}, truncate: false });
+    await Reservation.destroy({ where: {}, truncate: false });
+    await Screening.destroy({ where: {}, truncate: false });
+    await Seat.destroy({ where: {}, truncate: false });
+    await Room.destroy({ where: {}, truncate: false });
+    await Movie.destroy({ where: {}, truncate: false });
+    await User.destroy({ where: {}, truncate: false });
+    await Carousel.destroy({ where: {}, truncate: false }); // Clear carousel data
 
-  ];
-  MoviesModel.seed(movies as any);
+    const baseUrl = `${req.protocol}://${req.get("host")}`;
 
-  const rooms = [
-    new Room(1, "Sala 1", 40, "2D"),
-    new Room(2, "Sala 2", 60, "3D"),
-  ];
-  seedRooms(rooms as any);
+    // 1. Carousel Items
+    const initialCarouselItems = [
+      {
+        title: "Estreno de Verano",
+        subtitle: "No te pierdas nuestra nueva película",
+        desktopImageUrl: `${baseUrl}/uploads/carousel/seed-banner-1.jpg`,
+        link: "/movies/1",
+        order: 1,
+        isActive: true,
+      },
+      {
+        title: "Oferta Especial",
+        subtitle: "2x1 en entradas todos los martes",
+        desktopImageUrl: `${baseUrl}/uploads/carousel/seed-banner-2.jpg`,
+        link: "/offers/tuesday",
+        order: 2,
+        isActive: true,
+      },
+      {
+        title: "Noche de Clásicos",
+        subtitle: "Revive los clásicos en pantalla grande.",
+        desktopImageUrl: `${baseUrl}/uploads/carousel/seed-banner-3.jpg`,
+        link: "/cartelera",
+        order: 3,
+        isActive: false, // Este no estará activo inicialmente
+      },
+    ];
+    await Carousel.bulkCreate(initialCarouselItems);
 
-  const screenings = [
-    new ScreeningEntity(
-      1,
-      new Date(),
-      new Date(),
-      new Date(Date.now() + 3600000),
-      120
-    ),
-    new ScreeningEntity(
-      2,
-      new Date(),
-      new Date(Date.now() + 7200000),
-      new Date(Date.now() + 10800000),
-      150
-    ),
-  ];
-  seedScreenings(screenings as any);
+    // 2. Movies
+    const movies = [
+      {
+        name: "Inception",
+        length: 148,
+        description: "Sueños dentro de sueños.",
+        genre: "Ciencia ficción",
+        categorie: "Estreno",
+        director: "Christopher Nolan",
+        lenguage: "Inglés",
+        subtitles: true,
+        poster:
+          "https://via.placeholder.com/300x450/1a1a1a/FFD700?text=Inception",
+      },
+      {
+        name: "Interstellar",
+        length: 169,
+        description: "Viaje espacial y relatividad.",
+        genre: "Ciencia ficción",
+        categorie: "Estreno",
+        director: "Christopher Nolan",
+        lenguage: "Inglés",
+        subtitles: true,
+        poster:
+          "https://via.placeholder.com/300x450/1a1a1a/FFA500?text=Interstellar",
+      },
+      {
+        name: "The Dark Knight",
+        length: 152,
+        description: "Batman enfrenta al Joker.",
+        genre: "Acción",
+        categorie: "Clásico",
+        director: "Christopher Nolan",
+        lenguage: "Inglés",
+        subtitles: true,
+        poster:
+          "https://via.placeholder.com/300x450/1a1a1a/DC143C?text=Dark+Knight",
+      },
+      {
+        name: "Pulp Fiction",
+        length: 154,
+        description: "Historias entrelazadas de crimen.",
+        genre: "Crimen",
+        categorie: "Clásico",
+        director: "Quentin Tarantino",
+        lenguage: "Inglés",
+        subtitles: true,
+        poster:
+          "https://via.placeholder.com/300x450/1a1a1a/FF69B4?text=Pulp+Fiction",
+      },
+      {
+        name: "The Matrix",
+        length: 136,
+        description: "Realidad simulada y revolución.",
+        genre: "Ciencia ficción",
+        categorie: "Clásico",
+        director: "The Wachowskis",
+        lenguage: "Inglés",
+        subtitles: true,
+        poster:
+          "https://via.placeholder.com/300x450/1a1a1a/00FF00?text=The+Matrix",
+      },
+      {
+        name: "Forrest Gump",
+        length: 142,
+        description: "Vida extraordinaria de un hombre común.",
+        genre: "Drama",
+        categorie: "Clásico",
+        director: "Robert Zemeckis",
+        lenguage: "Inglés",
+        subtitles: true,
+        poster:
+          "https://via.placeholder.com/300x450/1a1a1a/87CEEB?text=Forrest+Gump",
+      },
+    ];
+    const createdMovies = await Movie.bulkCreate(movies);
 
-  const seats = [
-    new seat(1, 1, 1),
-    new seat(2, 1, 2),
-    new seat(3, 1, 3),
-    new seat(4, 1, 4),
-    new seat(5, 1, 5),
-  ];
-  seedSeats(seats as any);
+    // 3. Rooms
+    const rooms = [
+      {
+        name: "Sala 1",
+        capacity: 40,
+        type: "2D",
+        rows: 5,
+        cols: 8,
+        isActive: true,
+      },
+      {
+        name: "Sala 2",
+        capacity: 60,
+        type: "3D",
+        rows: 6,
+        cols: 10,
+        isActive: true,
+      },
+    ];
+    const createdRooms = await Room.bulkCreate(rooms);
 
-  const users = [
-    {
-      idUser: 1,
-      name: "Admin",
-      email: "admin@example.com",
-      password: "admin",
-      role: true,
-    },
-    {
-      idUser: 2,
-      name: "Client",
-      email: "client@example.com",
-      password: "client",
-      role: false,
-    },
-  ];
-  // Hash passwords before seeding
-  const usersHashed = await Promise.all(
-    users.map(async (u: any) => ({
-      ...u,
-      password: await bcrypt.hash(u.password, 10),
-    }))
-  );
-  seedUsers(usersHashed as any);
+    // 4. Seats
+    const seatsData = [];
+    for (const room of createdRooms) {
+      for (let r = 1; r <= room.rows; r++) {
+        for (let c = 1; c <= room.cols; c++) {
+          seatsData.push({
+            row: r,
+            column: c,
+            roomId: room.idRoom,
+            type: "Standard",
+          });
+        }
+      }
+    }
+    await Seat.bulkCreate(seatsData);
 
-  // reset reservations to empty
-  ReservationMock.seed([] as any);
+    // 5. Users
+    const users = [
+      {
+        name: "Admin",
+        email: "admin@example.com",
+        password: await bcrypt.hash("admin", 10),
+        role: true,
+      },
+      {
+        name: "Client",
+        email: "client@example.com",
+        password: await bcrypt.hash("client", 10),
+        role: false,
+      },
+    ];
+    await User.bulkCreate(users);
 
-  return res.status(200).json({ message: "Seed applied" });
+    // 6. Screenings
+    if (createdMovies.length > 0 && createdRooms.length > 0) {
+      const now = new Date();
+      const screenings = [
+        {
+          movieId: createdMovies[0]!.idMovie,
+          roomId: createdRooms[0]!.idRoom,
+          date: now,
+          start: new Date(now.getTime() + 3600000), // +1 hour
+          end: new Date(now.getTime() + 7200000), // +2 hours
+          ticketPrice: 350,
+        },
+        {
+          movieId: createdMovies[1]!.idMovie,
+          roomId: createdRooms[1]!.idRoom,
+          date: now,
+          start: new Date(now.getTime() + 10800000),
+          end: new Date(now.getTime() + 14400000),
+          ticketPrice: 400,
+        },
+      ];
+      await Screening.bulkCreate(screenings);
+    }
+
+    return res.status(200).json({ message: "Seed applied successfully" });
+  } catch (error: any) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ message: "Seed failed", error: error.message });
+  }
 });
 
 export default router;

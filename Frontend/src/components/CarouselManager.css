@@ -1,0 +1,53 @@
+.carousel-table img {
+  max-width: 100px;
+  max-height: 50px;
+  object-fit: cover;
+}
+
+.real-time-preview {
+  background-color: #f8f9fa; /* Light background for the preview section */
+  border-color: #dee2e6; /* Border color */
+}
+
+.preview-card {
+  width: 100%;
+  height: 200px; /* Fixed height for consistent preview */
+  background-color: #6c757d; /* Default background if no image */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.preview-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.7); /* Slightly darken image for text readability */
+}
+
+.preview-placeholder {
+  width: 100%;
+  height: 100%;
+  color: #6c757d; /* Muted text color for placeholder */
+  background-color: #e9ecef; /* Light background for placeholder */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.preview-overlay {
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.7) 0%,
+    rgba(0, 0, 0, 0) 100%
+  );
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.preview-overlay h4,
+.preview-overlay p {
+  margin-bottom: 0;
+}

@@ -5,10 +5,11 @@ import BookingList from "./BookingList";
 import AdminPanelScreenings from "./AdminPanelScreenings";
 import MovieAdminPanel from "./MovieAdminPanel";
 import AdminPanelRoom from "./AdminPanelRoom";
+import CarouselManager from "./CarouselManager";
 
 export const AdminPanel: React.FC = () => {
   const [view, setView] = useState<
-    "movies" | "screening" | "users" | "bookings" | "rooms"
+    "movies" | "screening" | "users" | "bookings" | "rooms" | "carousel"
   >("users");
 
   return (
@@ -50,11 +51,18 @@ export const AdminPanel: React.FC = () => {
         >
           Salas
         </Button>
+        <Button
+          variant={view === "carousel" ? "primary" : "outline-primary"}
+          onClick={() => setView("carousel")}
+        >
+          Carrusel
+        </Button>
       </div>
 
       {view === "movies" && <MovieAdminPanel />}
       {view === "screening" && <AdminPanelScreenings />}
       {view === "users" && <UserList />}
+      {view === "carousel" && <CarouselManager />}
       {view === "bookings" && <BookingList />}
       {view === "rooms" && <AdminPanelRoom />}
     </Container>

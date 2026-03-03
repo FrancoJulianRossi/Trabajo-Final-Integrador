@@ -11,7 +11,7 @@ export interface AuthRequest extends Request {
 export function authenticate(
   req: AuthRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   const header = req.headers["authorization"] as string | undefined;
   if (!header || !header.startsWith("Bearer "))
@@ -30,7 +30,7 @@ export function authenticate(
 export function requireAdmin(
   req: AuthRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   if (!req.user) return res.status(401).json({ message: "Not authenticated" });
   if (!req.user.role)

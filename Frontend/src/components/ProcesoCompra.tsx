@@ -9,7 +9,7 @@ import {
   Alert,
   ListGroup,
 } from "react-bootstrap";
-import { createBooking } from "../api/mockClient";
+import { createMercadoPagoPreference } from "../api/payment.api";
 
 interface Seat {
   id: number;
@@ -40,21 +40,34 @@ export const ProcesoCompra: React.FC<{
 }> = ({ screening, movie, seats, onConfirm, onBack }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const { token } = useAuth();
+  const { user, token } = useAuth();
   const total = seats.length * screening.ticketPrice;
 
   const handleConfirm = async () => {
     setLoading(true);
     setError("");
     try {
+      if (!user?.idUser) {
+        throw new Error("User not authenticated.");
+      }
+
       const payload = {
-        screening,
-        seats: seats.map((s) => ({ row: s.row, column: s.column })),
+        userId: user.idUser,
+        screeningId: screening.idScreening,
+        seatIds: seats.map((s) => (s as any).idSeat),
       };
-      await createBooking(payload, token || undefined);
-      onConfirm();
+
+      const initPoint = await createMercadoPagoPreference(
+        payload,
+        token || undefined,
+      );
+
+      // Redirigir al usuario al initPoint de Mercado Pago
+      window.location.href = initPoint;
+      // onConfirm(); // Ya no llamamos a onConfirm aquí, la redirección se encarga del flujo
     } catch (err: any) {
-      setError(err.message);
+      console.error("Error al crear preferencia de Mercado Pago:", err);
+      setError(err.message || "Error al procesar el pago.");
     } finally {
       setLoading(false);
     }

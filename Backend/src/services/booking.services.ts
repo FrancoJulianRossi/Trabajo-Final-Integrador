@@ -149,8 +149,8 @@ export class BookingService {
       } catch (err: any) {
         // If another transaction slipped through and inserted the same seat for
         // this screening, the unique index will raise a constraint error.
-        if (err.name === "SequelizeUniqueConstraintError") {
-          throw new Error("Some seats are already occupied");
+        if (err.name === 'SequelizeUniqueConstraintError') {
+          throw new Error('Some seats are already occupied');
         }
         throw err;
       }
@@ -254,8 +254,8 @@ export class BookingService {
         try {
           await ReservationSeat.bulkCreate(newEntries, { transaction: t });
         } catch (err: any) {
-          if (err.name === "SequelizeUniqueConstraintError") {
-            throw new Error("Some new seats are already occupied");
+          if (err.name === 'SequelizeUniqueConstraintError') {
+            throw new Error('Some new seats are already occupied');
           }
           throw err;
         }
