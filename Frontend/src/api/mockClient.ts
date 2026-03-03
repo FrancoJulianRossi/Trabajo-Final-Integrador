@@ -338,7 +338,6 @@ export async function updateBanners(banners: any[]) {
     console.log("Mock updateBanners called with:", banners);
     return { success: true, data: banners };
   }
-  // Esta función ya no es necesaria con el nuevo sistema
   console.warn("updateBanners is deprecated. Use createCarouselItem instead.");
   return { success: true, data: banners };
 }

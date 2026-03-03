@@ -184,9 +184,6 @@ export const AdminPanelScreenings: React.FC = () => {
     setError(null);
     try {
       if (USE_STATIC) {
-        // in static mode we know the form fills all required fields,
-        // but the compiler sees `data` as Partial<Screening> so fields
-        // might be undefined. use non-null assertions or defaults here.
         const created: Screening = {
           idScreening: Date.now(),
           movieId: data.movieId!,

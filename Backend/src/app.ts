@@ -7,8 +7,8 @@ import userRoutes from "./routes/user.routes";
 import bookingRoutes from "./routes/booking.routes";
 import seedRoutes from "./routes/seed.routes";
 import roomRoutes from "./routes/room.routes";
-import carouselRoutes from "./routes/carousel.routes"; // Importar rutas del carrusel
-import paymentRoutes from "./routes/payment.routes"; // Importar rutas de pagos
+import carouselRoutes from "./routes/carousel.routes";
+import paymentRoutes from "./routes/payment.routes";
 
 const app = express();
 
@@ -32,8 +32,8 @@ app.use("/api", userRoutes);
 app.use("/api", bookingRoutes);
 app.use("/api", seedRoutes);
 app.use("/api", roomRoutes);
-app.use("/api", carouselRoutes); // Usar rutas del carrusel
-app.use("/api", paymentRoutes); // Usar rutas de pagos
+app.use("/api", carouselRoutes);
+app.use("/api", paymentRoutes);
 
 app.get("/", (req, res) => res.send("API Mock Server running"));
 

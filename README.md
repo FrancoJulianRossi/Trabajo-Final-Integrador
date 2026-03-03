@@ -33,7 +33,142 @@ Basado en el análisis de las dependencias, el sistema utiliza las siguientes te
 
 ---
 
-## 2. Arquitectura del Sistema
+## 2. Instalación y Configuración Local
+
+### Requisitos Previos
+
+- **Node.js:** Versión 18 o superior.
+- **PostgreSQL:** Base de datos instalada y en ejecución.
+- **npm / yarn:** Gestor de paquetes.
+
+### Paso 1: Clonar el repositorio
+
+```bash
+git clone https://github.com/FrancoJulianRossi/Trabajo-Final-Integrador.git
+cd Trabajo-Final-Integrador
+```
+
+#### Crear la base de datos
+
+```sql
+create database cinema_db
+```
+
+### Paso 2: Configuración del Backend
+
+1. Entrar al directorio del servidor:
+
+```bash
+   cd Backend
+```
+
+2. Instalar dependencias:
+
+```bash
+   npm install
+```
+
+3. Configurar variables de entorno:
+   Edita el archivo `.env.example` a `.env`
+4. Ejecutar el comando build:
+
+```bash
+   npm run build
+```
+
+5. Ejecutar el servidor en modo desarrollo:
+
+```bash
+   npm run start
+```
+
+6. Ejecutar la peticion POST para poblar la base de datos:
+   Postman
+   `POST /seed`
+
+### Paso 3: Configuración del Frontend
+
+1. Entrar al directorio del cliente:
+   ```bash
+   cd ../Frontend
+   ```
+2. Instalar dependencias:
+   ```bash
+   npm install
+   ```
+3. Configurar variables de entorno:
+   Edita el archivo `.env.example` a `.env` :
+4. Ejecutar la aplicación:
+   ```bash
+   npm run dev
+   ```
+
+---
+
+### Credenciales
+
+#### Mercado pago
+
+usuario: TESTUSER6565947047689893210
+
+password: wGNiKqbGYv
+
+codigo de verificacion: 235039
+
+#### Login
+
+ADMINISTRADOR
+
+usuario: admin@example.com
+
+password: admin
+
+CLIENTE
+
+usuario: client@example.com
+
+password: client
+
+## 3. Documentación de la API (Endpoints)
+
+La API está prefijada con `/api`. Los endpoints protegidos requieren el header `Authorization: Bearer <token>`.
+
+### Autenticación (`/auth`)
+
+- `POST /auth/register`: Registro de nuevos usuarios.
+- `POST /auth/login`: Inicio de sesión (Retorna JWT).
+
+### Películas (`/movies`)
+
+- `GET /movies`: Listar todas las películas.
+- `GET /movies/:id`: Obtener detalles de una película.
+- `POST /movies`: Crear película (Admin).
+- `PUT /movies/:id`: Actualizar película (Admin).
+- `DELETE /movies/:id`: Eliminar película (Admin).
+
+### Salas y Funciones (`/rooms`, `/screenings`)
+
+- `GET /rooms`: Listar todas las salas.
+- `POST /rooms`: Crear sala (Admin).
+- `GET /screenings`: Listar todas las funciones.
+- `GET /screenings/:id`: Detalle de una función.
+- `POST /screenings`: Programar nueva función (Admin).
+
+### Reservas y Pagos (`/bookings`, `/payments`)
+
+- `GET /bookings`: Listar reservas del usuario autenticado.
+- `POST /bookings`: Crear una nueva reserva de asientos.
+- `DELETE /bookings/:id`: Cancelar una reserva.
+- `POST /payments/create-preference`: Integración con MercadoPago.
+- `POST /payments/webhook`: Webhook para confirmación de pagos.
+
+### Utilidades
+
+- `POST /seed`: Población inicial de la base de datos con datos de prueba.
+
+---
+
+## 4. Arquitectura del Sistema
 
 ### Diagrama de Arquitectura
 
@@ -63,7 +198,7 @@ graph TD
 
 ---
 
-## 3. Modelo de Dominio y Base de Datos
+## 5. Modelo de Dominio y Base de Datos
 
 ### Diagrama ER (Entidad-Relación)
 
@@ -131,15 +266,9 @@ erDiagram
     }
 ```
 
-### Relaciones Clave
-
-- **Salas y Asientos (1:N):** Cada sala tiene una configuración fija de asientos definida por filas y columnas.
-- **Funciones (Screenings):** Actúa como la entidad central que relaciona una Película, una Sala y un Horario específico.
-- **Reservas y Asientos Reservados (1:N y N:M indirecto):** Una reserva puede incluir múltiples asientos. La tabla `ReservationSeat` actúa como tabla intermedia pero también incluye el `screeningId` para aplicar una restricción de unicidad (`screeningId` + `seatId`), impidiendo que el mismo asiento sea vendido dos veces para la misma función.
-
 ---
 
-## 4. Casos de Uso y Flujos Principales
+## 6. Casos de Uso y Flujos Principales
 
 ### Casos de Uso
 
@@ -153,38 +282,9 @@ erDiagram
   - Programación de funciones y gestión de precios.
   - Visualización y gestión de todas las reservas del sistema.
 
-### Diagrama de Secuencia: Creación de Reserva
-
-Este flujo muestra la operación crítica de asegurar asientos para una función.
-
-```mermaid
-sequenceDiagram
-    participant U as Usuario (Frontend)
-    participant A as API Controller
-    participant S as Booking Service
-    participant DB as Database (PostgreSQL)
-
-    U->>A: POST /api/bookings (seats, screeningId)
-    A->>S: createReservation(screeningId, userId, seats)
-    S->>DB: Start Transaction
-    S->>DB: Lock requested seats for Screening
-    alt Asientos Ocupados
-        DB-->>S: Conflict detected
-        S-->>A: Error: Seats already occupied
-        A-->>U: 409 Conflict
-    else Asientos Libres
-        S->>DB: Create Reservation record
-        S->>DB: Insert ReservationSeat entries
-        S->>DB: Commit Transaction
-        DB-->>S: Success
-        S-->>A: Reservation Object
-        A-->>U: 201 Created (Success)
-    end
-```
-
 ---
 
-## 5. Análisis Técnico Destacado
+## 7. Análisis Técnico Destacado
 
 ### Fragmento de Código: Manejo de Transacciones y Bloqueos
 
@@ -226,18 +326,18 @@ El uso de `t.LOCK.UPDATE` dentro de una transacción de Sequelize es vital en es
 
 ---
 
-## 6. Interfaz y Ejemplos (Placeholders)
+## 8. Interfaz y Ejemplos (Placeholders)
 
 ### UI Screenshots
 
-![alt text](image.png)
+![Cartelera](image.png)
 _Vista de la cartelera y filtros de películas._
 
-![alt text](image-1.png)
+![Mapa de Asientos](image-1.png)
 _Mapa interactivo de la sala permitiendo selección múltiple de asientos._
 
-![alt text](image-2.png)
-_Panel de administrador_
+![Admin Panel](image-2.png)
+_Panel de administración para gestión de recursos._
 
 ### Ejemplo de JSON Payload (API Output)
 
@@ -263,11 +363,8 @@ Respuesta típica tras una reserva exitosa:
 ## Integrantes
 
 - #### Franco Julian Rossi
-
 - #### Manuel Galdames
-
 - #### Santiago Recari
-
 - #### Martin Andres Garnica
 
-<br>
+---
