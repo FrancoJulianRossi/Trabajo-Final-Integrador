@@ -90,7 +90,7 @@ export class PaymentService {
           ],
           external_reference: reservation.idReservation.toString(),
           notification_url:
-            "trabajo-final-integrador-backend.onrender.com/api/payments/webhook",
+            "https://trabajo-final-integrador-backend.onrender.com/api/payments/webhook",
 
           // Asegúrate de que termine en "s"
           back_urls: {
