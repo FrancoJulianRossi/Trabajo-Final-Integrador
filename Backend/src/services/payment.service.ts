@@ -95,11 +95,11 @@ export class PaymentService {
           // Asegúrate de que termine en "s"
           back_urls: {
             success:
-              "https://trabajo-final-integrador-backend.onrender.com/payment-success",
+              "https://trabajo-final-integrador-frontend.onrender.com/payment-success",
             pending:
-              "https://trabajo-final-integrador-backend.onrender.com/payment-pending",
+              "https://trabajo-final-integrador-frontend.onrender.com/payment-pending",
             failure:
-              "https://trabajo-final-integrador-backend.onrender.com/payment-failure",
+              "https://trabajo-final-integrador-frontend.onrender.com/payment-failure",
           },
           auto_return: "approved",
 
