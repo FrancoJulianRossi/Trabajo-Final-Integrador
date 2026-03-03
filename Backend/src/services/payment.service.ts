@@ -92,7 +92,6 @@ export class PaymentService {
           notification_url:
             "https://trabajo-final-integrador-backend.onrender.com/api/payments/webhook",
 
-          // Asegúrate de que termine en "s"
           back_urls: {
             success:
               "https://trabajo-final-integrador-frontend.onrender.com/payment-success",
@@ -102,8 +101,6 @@ export class PaymentService {
               "https://trabajo-final-integrador-frontend.onrender.com/payment-failure",
           },
           auto_return: "approved",
-
-          // Va afuera de back_urls, pero adentro de body
         },
       };
 

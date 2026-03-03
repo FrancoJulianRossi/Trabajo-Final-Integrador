@@ -64,7 +64,6 @@ export const ProcesoCompra: React.FC<{
 
       // Redirigir al usuario al initPoint de Mercado Pago
       window.location.href = initPoint;
-      // onConfirm(); // Ya no llamamos a onConfirm aquí, la redirección se encarga del flujo
     } catch (err: any) {
       console.error("Error al crear preferencia de Mercado Pago:", err);
       setError(err.message || "Error al procesar el pago.");

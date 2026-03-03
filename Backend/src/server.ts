@@ -5,7 +5,6 @@ const port = process.env.PORT ? Number(process.env.PORT) : 3000;
 
 connectDB().then(() => {
   app.listen(port, () => {
-    // tslint:disable-next-line:no-console
     console.log(`Server listening on port ${port}`);
   });
 });

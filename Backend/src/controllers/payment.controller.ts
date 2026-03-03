@@ -51,9 +51,6 @@ export const createPreference = async (req: Request, res: Response) => {
 export const handleWebhook = async (req: Request, res: Response) => {
   try {
     const { type, data } = req.body;
-
-    // Mercado Pago envía diferentes tipos de notificaciones
-    // Nos interesa "payment" cuando el estado es "approved"
     if (type === "payment") {
       const paymentId = data?.id;
 
@@ -63,12 +60,6 @@ export const handleWebhook = async (req: Request, res: Response) => {
         });
       }
 
-      // Aquí deberías buscar la preferencia usando el payment ID
-      // Para este flujo simple, asumimos que el external_reference
-      // viene en las notificaciones de Mercado Pago
-
-      // Este es un punto de inicio; necesitarás integrar con la API
-      // de Mercado Pago para obtener los detalles del pago
       console.log("Webhook received for payment:", paymentId);
     }
 
@@ -86,10 +77,6 @@ export const handleWebhook = async (req: Request, res: Response) => {
   }
 };
 
-/**
- * Webhook mejorado que maneja payment.updated notifications
- * Mercado Pago envía el external_reference en la notificación
- */
 export const handleMercadopagoWebhook = async (req: Request, res: Response) => {
   try {
     // 1. Extraer el ID (Soporta tanto Webhooks por body como IPNs por query)
@@ -100,7 +87,7 @@ export const handleMercadopagoWebhook = async (req: Request, res: Response) => {
     // 2. Responder SIEMPRE 200 inmediatamente a Mercado Pago para evitar reintentos infinitos
     res.status(200).send("OK");
 
-    // Si no hay ID o no es un evento de pago, ignoramos (pero ya respondimos 200)
+    // Si no hay ID o no es un evento de pago, ignoramos
     if (type !== "payment" || !paymentId) {
       return;
     }

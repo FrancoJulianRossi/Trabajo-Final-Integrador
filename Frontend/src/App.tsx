@@ -118,12 +118,7 @@ function CheckoutWrapper() {
       screening={state.screening}
       movie={state.movie}
       seats={state.seats}
-      onConfirm={() => {
-        // Redirection to success page is now handled by Mercado Pago's back_urls
-        // This onConfirm might need to be adjusted or removed if not used elsewhere
-        // For now, let's assume it's not directly used for redirection anymore
-        // If it's critical for other flows, it might need to be handled differently.
-      }}
+      onConfirm={() => {}}
       onBack={() =>
         navigate("/booking", {
           state: { screening: state.screening, movie: state.movie },

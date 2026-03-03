@@ -105,26 +105,23 @@ export class RoomService {
       const room = await Room.findByPk(id);
       if (!room) return null;
 
-      // If dimensions change, we might need to recreate seats or handle it carefully.
-      // For now, let's allow updating basic info and seat configuration.
-      
       if (data.seats) {
         // Remove old seats and create new ones
         await Seat.destroy({ where: { roomId: id }, transaction: t });
-        
+
         const seatsWithRoomId = data.seats.map((s) => ({
           ...s,
           roomId: id,
         }));
         await Seat.bulkCreate(seatsWithRoomId, { transaction: t });
-        
+
         // Recalculate capacity
-        data.capacity = data.seats.filter(s => s.type !== 'Empty').length;
+        data.capacity = data.seats.filter((s) => s.type !== "Empty").length;
       }
 
       await room.update(data, { transaction: t });
       await t.commit();
-      
+
       return await Room.findByPk(id, { include: ["seats"] });
     } catch (error) {
       await t.rollback();
@@ -136,7 +133,6 @@ export class RoomService {
     const room = await Room.findByPk(id);
     if (!room) return false;
 
-    // make sure there are no screenings scheduled in this room
     const count = await Screening.count({ where: { roomId: id } });
     if (count > 0) {
       throw new Error("Cannot delete room: it has screenings scheduled");

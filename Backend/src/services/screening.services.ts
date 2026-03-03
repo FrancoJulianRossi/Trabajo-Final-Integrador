@@ -1,8 +1,3 @@
-/*getScreeningById
-getScreenings
-createScreening
-updateScreening
-deleteScreening */
 import { Screening } from "../models/screening.model";
 import { Movie } from "../models/movie.model";
 import { Reservation } from "../models/reservation.model";
@@ -41,15 +36,6 @@ export class ScreeningService {
     return result;
   }
 
-  /**
-   * Calculates the end time of a screening based on movie length and start time.
-   * Mutates the provided `data` object to include `end` if possible.
-   */
-  /**
-   * Combines a date string (YYYY-MM-DD) with a time string (HH:mm or full iso)
-   * into a single Date object. If the `time` already contains a full date-time,
-   * it is returned as-is. Returns `null` when the inputs are not parseable.
-   */
   private combineDateTime(
     date: string | Date | undefined,
     time: string | Date | undefined,
@@ -70,14 +56,13 @@ export class ScreeningService {
       return isNaN(d.getTime()) ? null : d;
     }
 
-    const dateStr = date instanceof Date ? date.toISOString().slice(0, 10) : date;
+    const dateStr =
+      date instanceof Date ? date.toISOString().slice(0, 10) : date;
     const combined = new Date(`${dateStr}T${time}`);
     return isNaN(combined.getTime()) ? null : combined;
   }
 
   private async computeEndTime(data: Partial<Screening>) {
-    // only compute if movieId and start are present and either end is missing or we
-    // think it should be recalculated (start/movie changed)
     if (!data.movieId || !data.start) return;
 
     const movie = await Movie.findByPk(data.movieId);
@@ -87,7 +72,7 @@ export class ScreeningService {
     if (!startDate) return;
 
     const endDate = new Date(startDate.getTime() + movie.length * 60 * 1000);
-    data.end = endDate; // keep as Date for consistency with model
+    data.end = endDate;
   }
 
   private async validateTiming(
