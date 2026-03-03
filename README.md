@@ -1,229 +1,273 @@
-# Trabajo-Final-Integrador
+# Cinema Booking & Management System - Fullstack Application
 
-Resumen
--------
-Aplicación full-stack para la gestión de una sala de cine: catálogo de películas, gestión de salas, funciones (screenings), asientos, reservas y compras. Contiene Backend en TypeScript (Node + Express) y Frontend en React + Vite.
+## 1. Resumen Ejecutivo y Stack Tecnológico
 
-Estructura del proyecto
------------------------
-- [Backend](Backend)
-  - [src/app.ts](Backend/src/app.ts)
-  - [src/server.ts](Backend/src/server.ts)
-  - Controladores: [Backend/src/controllers/auth.controller.ts](Backend/src/controllers/auth.controller.ts), [Backend/src/controllers/movie.controller.ts](Backend/src/controllers/movie.controller.ts), [Backend/src/controllers/screening.controller.ts](Backend/src/controllers/screening.controller.ts), [Backend/src/controllers/booking.controller.ts](Backend/src/controllers/booking.controller.ts), [Backend/src/controllers/reservation.controller.ts](Backend/src/controllers/reservation.controller.ts), [Backend/src/controllers/user.controller.ts](Backend/src/controllers/user.controller.ts)
-  - Servicios: [Backend/src/services/movie.services.ts](Backend/src/services/movie.services.ts), [Backend/src/services/screening.services.ts](Backend/src/services/screening.services.ts), [Backend/src/services/booking.services.ts](Backend/src/services/booking.services.ts), [Backend/src/services/reservation.service.ts](Backend/src/services/reservation.service.ts), [Backend/src/services/user.services.ts](Backend/src/services/user.services.ts)
-  - Modelos / entidades: [Backend/src/models/entities/movie.entity.ts](Backend/src/models/entities/movie.entity.ts), [Backend/src/models/entities/room.entity.ts](Backend/src/models/entities/room.entity.ts), [Backend/src/models/entities/screening.entity.ts](Backend/src/models/entities/screening.entity.ts), [Backend/src/models/entities/seat.entity.ts](Backend/src/models/entities/seat.entity.ts), [Backend/src/models/entities/reservation.entity.ts](Backend/src/models/entities/reservation.entity.ts), [Backend/src/models/entities/user.entity.ts](Backend/src/models/entities/user.entity.ts)
-  - Rutas: [Backend/src/routes/movie.routes.ts](Backend/src/routes/movie.routes.ts), [Backend/src/routes/screening.routes.ts](Backend/src/routes/screening.routes.ts), [Backend/src/routes/booking.routes.ts](Backend/src/routes/booking.routes.ts), [Backend/src/routes/reservation.route.ts](Backend/src/routes/reservation.route.ts), [Backend/src/routes/auth.routes.ts](Backend/src/routes/auth.routes.ts), [Backend/src/routes/user.routes.ts](Backend/src/routes/user.routes.ts)
-- [Frontend](Frontend)
-  - Entrypoints: [Frontend/src/main.tsx](Frontend/src/main.tsx), [Frontend/src/App.tsx](Frontend/src/App.tsx)
-  - Componentes clave: [Frontend/src/components/Cartelera.tsx](Frontend/src/components/Cartelera.tsx), [Frontend/src/components/BookingForm.tsx](Frontend/src/components/BookingForm.tsx), [Frontend/src/components/SeleccionAsientos.tsx](Frontend/src/components/SeleccionAsientos.tsx), [Frontend/src/components/BookingView.tsx](Frontend/src/components/BookingView.tsx), [Frontend/src/components/LoginRegister.tsx](Frontend/src/components/LoginRegister.tsx)
-  - Contextos: [Frontend/src/contexts/AuthContext.tsx](Frontend/src/contexts/AuthContext.tsx)
+### Descripción General
 
-Requisitos
-----------
-- Node.js >= 18
-- npm o yarn
+Este proyecto es una plataforma integral para la gestión de cines y reserva de entradas. Permite a los administradores gestionar el catálogo de películas, configurar salas y asientos, y programar funciones (screenings). Los usuarios finales pueden navegar por la cartelera, seleccionar funciones, elegir sus asientos en tiempo real a través de una interfaz interactiva y completar el proceso de compra con integración de pagos. El sistema garantiza la integridad de los datos mediante el uso de transacciones y bloqueos a nivel de base de datos para evitar la sobreventa de asientos.
 
-Cómo ejecutar (desarrollo)
---------------------------
-Backend
-1. Ir a la carpeta Backend:
-   ```sh
-   cd Backend
-   ```
-2. Instalar dependencias:
-   ```sh
-   npm install
-   ```
-3. Compilar:
-   ```sh
-   npm run build
-   ```
-4. Ejecutar (ejemplo):
-   ```sh
-   npm run start
-   ```
+### Tech Stack
 
-Frontend
-1. Ir a la carpeta Frontend:
-   ```sh
-   cd Frontend
-   ```
-2. Instalar dependencias:
-   ```sh
-   npm install
-   ```
-3. Ejecutar:
-   ```sh
-   npm run dev
-   ```
-Aclaracion: para poder logearse dentro de la aplicacion como admin hay que usar el siguiente comando desde el cmd en backend: 
- ```sh
-curl -X POST http://localhost:3000/api/seed -H "Content-Type: application/json"
-  ```
-Informacion para usuario y admin de prueba:
-```
-admin@example.com / admin
-client@example.com / client
+Basado en el análisis de las dependencias, el sistema utiliza las siguientes tecnologías clave:
+
+**Backend:**
+
+- **Runtime:** Node.js con TypeScript.
+- **Framework:** Express.js (v5.1.0).
+- **ORM:** Sequelize con `sequelize-typescript` para un modelado de datos robusto y tipado.
+- **Base de Datos:** PostgreSQL.
+- **Autenticación:** JSON Web Tokens (JWT) y Bcryptjs para el hashing de contraseñas.
+- **Pagos:** MercadoPago SDK.
+- **Middleware:** Multer para la gestión de subida de archivos (posters de películas y carrusel).
+- **Testing:** Jest y Supertest.
+
+**Frontend:**
+
+- **Framework:** React (v19.2.0) con TypeScript.
+- **Build Tool:** Vite.
+- **Routing:** React Router DOM (v7.13.0).
+- **Styling:** Bootstrap 5 y React-Bootstrap para una UI responsiva y profesional.
+- **Animaciones:** Framer Motion.
+- **Componentes UI:** Swiper (Carruseles), Lucide React (Iconografía).
+- **Testing:** Vitest y React Testing Library con MSW (Mock Service Worker) para simular la API.
+
+---
+
+## 2. Arquitectura del Sistema
+
+### Diagrama de Arquitectura
+
+El sistema sigue una arquitectura cliente-servidor clásica con persistencia en una base de datos relacional y servicios externos de terceros.
+
+```mermaid
+graph TD
+    Client[React Frontend - SPA]
+    API[Express API - Node.js]
+    DB[(PostgreSQL - Sequelize)]
+    MP[MercadoPago API]
+    Storage[Local Storage / Uploads]
+
+    Client -- HTTP/REST (JSON + JWT) --> API
+    API -- SQL Queries --> DB
+    API -- Payment Process --> MP
+    API -- File Storage --> Storage
+    Client -- View Assets --> Storage
 ```
 
-API y rutas principales
------------------------
-- Autenticación: [Backend/src/routes/auth.routes.ts](Backend/src/routes/auth.routes.ts)
-- Películas: [Backend/src/routes/movie.routes.ts](Backend/src/routes/movie.routes.ts) -> controlador [Backend/src/controllers/movie.controller.ts](Backend/src/controllers/movie.controller.ts)
-- Funciones / Screening: [Backend/src/routes/screening.routes.ts](Backend/src/routes/screening.routes.ts) -> [Backend/src/controllers/screening.controller.ts](Backend/src/controllers/screening.controller.ts)
-- Reservas: [Backend/src/routes/reservation.route.ts](Backend/src/routes/reservation.route.ts) -> [Backend/src/controllers/reservation.controller.ts](Backend/src/controllers/reservation.controller.ts)
-- Bookings / Compras: [Backend/src/routes/booking.routes.ts](Backend/src/routes/booking.routes.ts) -> [Backend/src/controllers/booking.controller.ts](Backend/src/controllers/booking.controller.ts)
-- Usuarios: [Backend/src/routes/user.routes.ts](Backend/src/routes/user.routes.ts) -> [Backend/src/controllers/user.controller.ts](Backend/src/controllers/user.controller.ts)
+### Flujo Breve (Brief Flow)
 
-Diagrama Entidad-Relación (ER)
-------------------------------
-A continuación se incluye un diagrama ER en formato Mermaid que representa las entidades principales, sus atributos más importantes y las relaciones.
+1. **Acción del Usuario:** El usuario selecciona una función y elige sus asientos en el Frontend.
+2. **Petición a la API:** El cliente envía una petición `POST /api/bookings` incluyendo el token JWT y los datos de la reserva.
+3. **Persistencia en DB:** El servidor valida la disponibilidad de los asientos dentro de una transacción de base de datos para asegurar la atomicidad.
+4. **Respuesta:** La API confirma la reserva y el cliente redirige al usuario al flujo de pago o muestra un resumen del éxito de la operación.
+
+---
+
+## 3. Modelo de Dominio y Base de Datos
+
+### Diagrama ER (Entidad-Relación)
+
+El modelo de datos está diseñado para soportar la complejidad de las reservas de asientos por función específica.
 
 ```mermaid
 erDiagram
-  USER {
-    string id PK 
-    string name
-    string email
-    string passwordHash
-    string role
-    datetime createdAt
-  }
+    USER ||--o{ RESERVATION : "makes"
+    MOVIE ||--o{ SCREENING : "has"
+    ROOM ||--o{ SCREENING : "hosts"
+    ROOM ||--o{ SEAT : "contains"
+    SCREENING ||--o{ RESERVATION : "includes"
+    RESERVATION ||--o{ RESERVATION_SEAT : "consists of"
+    SEAT ||--o{ RESERVATION_SEAT : "is reserved in"
+    SCREENING ||--o{ RESERVATION_SEAT : "validates"
 
-  MOVIE {
-    string id PK 
-    string title
-    int durationMinutes
-    string description
-    string genre
-    float rating
-    date releaseDate
-  }
-
-  ROOM {
-    string id PK 
-    string name
-    int capacity
-    string location
-  }
-
-  SEAT {
-    string id PK 
-    string row
-    int number
-    string type
-    bool isAccessible
-    string roomId FK
-  }
-
-  SCREENING {
-    string id PK 
-    string movieId FK
-    string roomId FK
-    datetime startTime
-    float price
-    int availableSeats
-  }
-
-  RESERVATION {
-    string id PK 
-    string userId FK
-    string screeningId FK
-    float totalPrice
-    string status "PENDING/CONFIRMED/CANCELLED"
-    datetime createdAt
-  }
-
-  BOOKING {
-    string id PK 
-    string reservationId FK
-    string paymentMethod
-    string paymentStatus
-    datetime bookedAt
-  }
-
-  %% Relaciones
-  USER ||--o{ RESERVATION : "makes"
-  MOVIE ||--o{ SCREENING : "has"
-  ROOM ||--o{ SCREENING : "hosts"
-  ROOM ||--o{ SEAT : "contains"
-  SCREENING ||--o{ RESERVATION : "receives"
-  RESERVATION ||--o{ BOOKING : "becomes"
-  SEAT ||--o{ RESERVATION : "reserved_via" 
+    USER {
+        int idUser PK
+        string name
+        string email
+        string password
+        boolean role
+    }
+    MOVIE {
+        int idMovie PK
+        string name
+        int length
+        string genre
+        string poster
+    }
+    ROOM {
+        int idRoom PK
+        string name
+        int capacity
+        int rows
+        int cols
+    }
+    SEAT {
+        int idSeat PK
+        int roomId FK
+        int row
+        int column
+        string type
+    }
+    SCREENING {
+        int idScreening PK
+        int movieId FK
+        int roomId FK
+        date date
+        datetime start
+        datetime end
+        float ticketPrice
+    }
+    RESERVATION {
+        int idReservation PK
+        int userId FK
+        int screeningId FK
+        string status
+        float total
+    }
+    RESERVATION_SEAT {
+        int reservationId FK
+        int seatId FK
+        int screeningId FK
+    }
 ```
 
-Notas sobre el modelo de datos
------------------------------
-- RESERVATION -> SEAT es una relación muchos-a-muchos en la práctica: una reserva puede incluir varios asientos y un asiento puede reservarse en distintas funciones (screenings) en distintos horarios. Implementar con una tabla puente (por ejemplo reservation_seats).
-- SCREENING referencia a MOVIE y ROOM.
-- ROOM contiene SEATS fijos (fila, número). Para disponibilidad por función.
-- BOOKING agrupa los datos de pago asociados a una RESERVATION finalizada.
+### Relaciones Clave
 
+- **Salas y Asientos (1:N):** Cada sala tiene una configuración fija de asientos definida por filas y columnas.
+- **Funciones (Screenings):** Actúa como la entidad central que relaciona una Película, una Sala y un Horario específico.
+- **Reservas y Asientos Reservados (1:N y N:M indirecto):** Una reserva puede incluir múltiples asientos. La tabla `ReservationSeat` actúa como tabla intermedia pero también incluye el `screeningId` para aplicar una restricción de unicidad (`screeningId` + `seatId`), impidiendo que el mismo asiento sea vendido dos veces para la misma función.
 
-Licencia y créditos
--------------------
-Proyecto de fin de curso. 
+---
 
-Colección de endpoints (resumen)
--------------------------------
-A continuación se listan los endpoints principales del Backend con método, ruta, breve descripción y si requieren autenticación.
+## 4. Casos de Uso y Flujos Principales
 
-Auth
-- POST /auth/register — Registrar usuario. Body: { name, email, password } — No auth
-- POST /auth/login — Login. Body: { email, password } — No auth
-- GET  /auth/me — Obtener usuario autenticado — Auth requerido (Bearer token)
+### Casos de Uso
 
-Movies
-- GET  /movies — Listar películas — No auth
-- GET  /movies/:id — Obtener película por id — No auth
-- POST /movies — Crear película — Body: { title, durationMinutes, description, genre, releaseDate, rating } — Auth (admin)
-- PUT  /movies/:id — Actualizar película — Auth (admin)
-- DELETE /movies/:id — Eliminar película — Auth (admin)
+- **Actores (Usuarios):**
+  - Consultar cartelera y detalles de películas.
+  - Seleccionar asientos disponibles de forma interactiva.
+  - Realizar reservas y gestionar historial de compras.
+- **Actores (Administradores):**
+  - Gestión de catálogo de películas (CRUD con subida de imágenes).
+  - Configuración de salas y distribución de asientos.
+  - Programación de funciones y gestión de precios.
+  - Visualización y gestión de todas las reservas del sistema.
 
-Screenings (Funciones)
-- GET  /screenings — Listar funciones (puede filtrar por movieId, roomId, date) — No auth
-- GET  /screenings/:id — Obtener función por id — No auth
-- POST /screenings — Crear función. Body: { movieId, roomId, startTime, price } — Auth (admin)
-- PUT  /screenings/:id — Actualizar función — Auth (admin)
-- DELETE /screenings/:id — Eliminar función — Auth (admin)
+### Diagrama de Secuencia: Creación de Reserva
 
-Rooms y Seats (si expuestos)
-- GET  /rooms — Listar salas — No auth
-- GET  /rooms/:id — Detalle sala y asientos — No auth
-- POST/PUT/DELETE /rooms* — CRUD salas — Auth (admin)
-- POST/PUT/DELETE /rooms/:roomId/seats* — CRUD asientos — Auth (admin)
+Este flujo muestra la operación crítica de asegurar asientos para una función.
 
-Reservations
-- POST /reservations — Crear reserva. Body: { screeningId, userId(optional if auth), seats: [seatId], totalPrice } — Auth o guest según implementación
-- GET  /reservations — Listar reservas (admin o usuario filtrado) — Auth
-- GET  /reservations/:id — Obtener reserva por id — Auth (propietario o admin)
-- PUT  /reservations/:id/cancel — Cancelar reserva — Auth (propietario)
+```mermaid
+sequenceDiagram
+    participant U as Usuario (Frontend)
+    participant A as API Controller
+    participant S as Booking Service
+    participant DB as Database (PostgreSQL)
 
-Bookings /
-- POST /bookings — Completar reserva / procesar pago. Body: { reservationId, paymentMethod, paymentData } — Auth
-- GET  /bookings — Obtener info de booking — Auth (propietario o admin)
+    U->>A: POST /api/bookings (seats, screeningId)
+    A->>S: createReservation(screeningId, userId, seats)
+    S->>DB: Start Transaction
+    S->>DB: Lock requested seats for Screening
+    alt Asientos Ocupados
+        DB-->>S: Conflict detected
+        S-->>A: Error: Seats already occupied
+        A-->>U: 409 Conflict
+    else Asientos Libres
+        S->>DB: Create Reservation record
+        S->>DB: Insert ReservationSeat entries
+        S->>DB: Commit Transaction
+        DB-->>S: Success
+        S-->>A: Reservation Object
+        A-->>U: 201 Created (Success)
+    end
+```
 
-Users
-- GET  /users — Listar usuarios — Auth (admin)
-- GET  /users/:id — Obtener usuario — Auth (admin o propietario)
-- POST /users — Crear usuario (admin) — Body: { name, email, role }
-- PUT  /users/:id — Actualizar usuario — Auth (admin o propietario)
-- DELETE /users/:id — Borrar usuario — Auth (admin)
+---
 
-Seed / Utilidades
-- POST /seed — Cargar datos de ejemplo — Auth (admin) / Usado en desarrollo
+## 5. Análisis Técnico Destacado
 
-Integrantes
--------------------------------------------------------------------
-.Franco Julian Rossi
+### Fragmento de Código: Manejo de Transacciones y Bloqueos
 
-.Manuel Galdames
+Se ha seleccionado el método `createReservation` en `booking.services.ts` por su implementación de seguridad y consistencia de datos.
 
-.Santiago Recari
+```typescript
+// Backend/src/services/booking.services.ts (Simplificado)
+async createReservation(screeningId: number, userId: number, seats: { row: number, column: number }[]) {
+    const t = await sequelize.transaction();
+    try {
+        // ... búsqueda de asientos ...
 
-.Martin Andres Garnica
+        // Bloqueo de filas para prevenir inserciones concurrentes en los mismos asientos
+        const occupied = await ReservationSeat.findAll({
+            where: { seatId: seatInstances.map(s => s.idSeat) },
+            include: [{
+                model: Reservation,
+                where: { screeningId, status: { [Op.or]: ["Pending", "Confirmed", "Paid"] } }
+            }],
+            transaction: t,
+            lock: t.LOCK.UPDATE, // Bloqueo selectivo
+        });
+
+        if (occupied.length > 0) throw new Error("Some seats are already occupied");
+
+        // ... creación de reserva y bulkCreate de asientos ...
+
+        await t.commit();
+        return reservation;
+    } catch (error) {
+        await t.rollback();
+        throw error;
+    }
+}
+```
+
+**Explicación del Diseño:**
+El uso de `t.LOCK.UPDATE` dentro de una transacción de Sequelize es vital en este dominio. Previene la condición de carrera donde dos usuarios intentan reservar el mismo asiento al mismo tiempo. Al bloquear las filas de `ReservationSeat` asociadas, el sistema garantiza que la validación de "Asientos Libres" sea atómica y segura para concurrencia masiva.
+
+---
+
+## 6. Interfaz y Ejemplos (Placeholders)
+
+### UI Screenshots
+
+![alt text](image.png)
+_Vista de la cartelera y filtros de películas._
+
+![alt text](image-1.png)
+_Mapa interactivo de la sala permitiendo selección múltiple de asientos._
+
+![alt text](image-2.png)
+_Panel de administrador_
+
+### Ejemplo de JSON Payload (API Output)
+
+Respuesta típica tras una reserva exitosa:
+
+```json
+{
+  "idReservation": 125,
+  "userId": 10,
+  "screeningId": 45,
+  "status": "Confirmed",
+  "total": 4500.0,
+  "reservationDate": "2026-03-03T15:30:00.000Z",
+  "reservationSeats": [
+    { "seatId": 501, "screeningId": 45 },
+    { "seatId": 502, "screeningId": 45 }
+  ]
+}
+```
+
+---
+
+## Integrantes
+
+- #### Franco Julian Rossi
+
+- #### Manuel Galdames
+
+- #### Santiago Recari
+
+- #### Martin Andres Garnica
 
 <br>
-
-# Trabajo-Final-Integrador
-
