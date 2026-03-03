@@ -1,3 +1,5 @@
+/// <reference types="vite/client" />
+
 const USE_STATIC = Boolean(import.meta.env.VITE_STATIC_MOCKS);
 const API_BASE = import.meta.env.VITE_API_URL || "http://127.0.0.1:3000/api";
 
@@ -38,7 +40,10 @@ function toUserErrorMessage(
     if (status === 400 && normalized.includes("current password required")) {
       return "Debes ingresar tu contrasena actual para cambiarla.";
     }
-    if (status === 401 && normalized.includes("current password is incorrect")) {
+    if (
+      status === 401 &&
+      normalized.includes("current password is incorrect")
+    ) {
       return "La contrasena actual es incorrecta.";
     }
     if (status === 401) return "Tu sesion expiro. Inicia sesion nuevamente.";

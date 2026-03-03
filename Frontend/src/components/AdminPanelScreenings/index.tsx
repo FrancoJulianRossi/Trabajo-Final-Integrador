@@ -15,7 +15,7 @@ import ScreeningView from "./ScreeningView";
 import ScreeningForm from "./ScreeningForm";
 
 export const AdminPanelScreenings: React.FC = () => {
-const API_BASE = import.meta.env.VITE_API_URL || "http://127.0.0.1:3000/api"; 
+  const API_BASE = import.meta.env.VITE_API_URL || "http://127.0.0.1:3000/api";
   const USE_STATIC = Boolean(import.meta.env.VITE_STATIC_MOCKS);
   const { token } = useAuth();
 
@@ -184,14 +184,17 @@ const API_BASE = import.meta.env.VITE_API_URL || "http://127.0.0.1:3000/api";
     setError(null);
     try {
       if (USE_STATIC) {
+        // in static mode we know the form fills all required fields,
+        // but the compiler sees `data` as Partial<Screening> so fields
+        // might be undefined. use non-null assertions or defaults here.
         const created: Screening = {
           idScreening: Date.now(),
-          movieId: data.movieId,
-          roomId: data.roomId,
-          date: data.date,
-          start: data.start,
+          movieId: data.movieId!,
+          roomId: data.roomId!,
+          date: data.date || "", // should never be empty
+          start: data.start || "", // should never be empty
           end: data.end,
-          ticketPrice: data.ticketPrice,
+          ticketPrice: data.ticketPrice ?? 0,
         };
         setScreenings((s) => [created, ...s]);
         setCreating(false);
