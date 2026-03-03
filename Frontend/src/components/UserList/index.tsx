@@ -78,7 +78,11 @@ const UserList: React.FC = () => {
     page * itemsPerPage,
   );
 
-  const handleDelete = async (idUser: number) => {
+  const handleDelete = async (idUser?: number) => {
+    if (idUser === undefined) {
+      console.warn("handleDelete called with undefined idUser");
+      return;
+    }
     if (!confirm(`Confirmar eliminación del usuario #${idUser}?`)) return;
     try {
       if (import.meta.env.VITE_STATIC_MOCKS) {

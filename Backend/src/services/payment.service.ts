@@ -90,15 +90,18 @@ export class PaymentService {
           ],
           external_reference: reservation.idReservation.toString(),
           notification_url:
-            "https://agitative-nontaxonomic-arden.ngrok-free.dev/api/payments/webhook",
+            "https://trabajo-final-integrador-backend.onrender.com/api/payments/webhook",
 
           // Asegúrate de que termine en "s"
           back_urls: {
-            success: "http://127.0.0.1:5173/payment-success",
-            pending: "http://127.0.0.1:5173/payment-pending",
-            failure: "http://127.0.0.1:5173/payment-failure",
+            success:
+              "https://trabajo-final-integrador-frontend.onrender.com/payment-success",
+            pending:
+              "https://trabajo-final-integrador-frontend.onrender.com/payment-pending",
+            failure:
+              "https://trabajo-final-integrador-frontend.onrender.com/payment-failure",
           },
-          // auto_return: "approved",
+          auto_return: "approved",
 
           // Va afuera de back_urls, pero adentro de body
         },

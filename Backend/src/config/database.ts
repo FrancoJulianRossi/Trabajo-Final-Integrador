@@ -11,13 +11,15 @@ import { Carousel } from "../models/carousel.model";
 
 dotenv.config();
 
+// configure Sequelize for PostgreSQL (formerly MySQL)
+// you can also set a DATABASE_URL env var if you prefer a single connection string
 export const sequelize = new Sequelize({
-  dialect: "mysql",
+  dialect: "postgres",
   host: process.env.DB_HOST || "localhost",
-  username: process.env.DB_USER || "root",
+  username: process.env.DB_USER || "postgres",
   password: process.env.DB_PASSWORD || "",
   database: process.env.DB_NAME || "test",
-  port: Number(process.env.DB_PORT) || 3306,
+  port: Number(process.env.DB_PORT) || 5432,
   models: [
     User,
     Movie,
